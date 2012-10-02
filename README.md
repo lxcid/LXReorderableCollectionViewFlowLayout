@@ -17,23 +17,23 @@ The goal of LXReorderableCollectionViewFlowLayout is to provides capability for 
 Getting Started
 ===============
 
-1. Drag the `LXReorderableCollectionViewFlowLayout` folder into your project.
-2. Initialize/Setup your collection view to use `LXReorderableCollectionViewFlowLayout`.
-3. If you setup your collection view programmatically, make sure you call `[LXReorderableCollectionViewFlowLayout setUpGestureRecognizersOnCollectionView]` instance method after the collection view is setup.
+<img src="https://raw.github.com/lxcid/LXReorderableCollectionViewFlowLayout/master/Content/Screenshots/screenshot1.png" alt="Screenshot" title="Screenshot" style="display:block; margin: 10px auto 30px auto; width: 300px; height: 400px;" class="center">
 
-    [theReorderableCollectionViewFlowLayout setUpGestureRecognizersOnCollectionView];
+ 1. Drag the `LXReorderableCollectionViewFlowLayout` folder into your project.
+ 2. Initialize/Setup your collection view to use `LXReorderableCollectionViewFlowLayout`.
+ 3. If you setup your collection view programmatically, make sure you call `[LXReorderableCollectionViewFlowLayout setUpGestureRecognizersOnCollectionView]` instance method after the collection view is setup.
 
-4. The collection view controller that is to support reordering capability must conforms to `LXReorderableCollectionViewDelegateFlowLayout` protocol. For example,
+        [theReorderableCollectionViewFlowLayout setUpGestureRecognizersOnCollectionView];
 
-    #pragma mark - LXReorderableCollectionViewDelegateFlowLayout methods
+ 4. The collection view controller that is to support reordering capability must conforms to `LXReorderableCollectionViewDelegateFlowLayout` protocol. For example,
 
-    - (void)itemAtIndexPath:(NSIndexPath *)theFromIndexPath willMoveToIndexPath:(NSIndexPath *)theToIndexPath {
-        id theFromItem = [self.deck objectAtIndex:theFromIndexPath.item];
-        [self.deck removeObjectAtIndex:theFromIndexPath.item];
-        [self.deck insertObject:theFromItem atIndex:theToIndexPath.item];
-    }
+        - (void)itemAtIndexPath:(NSIndexPath *)theFromIndexPath willMoveToIndexPath:(NSIndexPath *)theToIndexPath {
+            id theFromItem = [self.deck objectAtIndex:theFromIndexPath.item];
+            [self.deck removeObjectAtIndex:theFromIndexPath.item];
+            [self.deck insertObject:theFromItem atIndex:theToIndexPath.item];
+        }
 
-5. Setup your collection view accordingly to your need and run it!
+ 5. Setup your collection view accordingly to your need, run and see it in action! :D
 
 Requirements
 ============

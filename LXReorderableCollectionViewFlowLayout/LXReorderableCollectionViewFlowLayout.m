@@ -148,20 +148,30 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
             UIGraphicsEndImageContext();
             
             UIImageView *theImageView = [[UIImageView alloc] initWithImage:theImage];
-            theImageView.frame = CGRectMake(CGRectGetMinX(theCollectionViewCell.frame), CGRectGetMinY(theCollectionViewCell.frame), CGRectGetWidth(theImageView.frame), CGRectGetHeight(theImageView.frame));
+            theImageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight; // Not using constraints, lets auto resizing mask be translated automatically...
+            
             UIImageView *theHighlightedImageView = [[UIImageView alloc] initWithImage:theHighlightedImage];
             theHighlightedImageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight; // Not using constraints, lets auto resizing mask be translated automatically...
-            [theImageView addSubview:theHighlightedImageView];
-            [self.collectionView addSubview:theImageView];
+            
+            UIView *theView = [[UIView alloc] initWithFrame:CGRectMake(CGRectGetMinX(theCollectionViewCell.frame), CGRectGetMinY(theCollectionViewCell.frame), CGRectGetWidth(theImageView.frame), CGRectGetHeight(theImageView.frame))];
+            
+            [theView addSubview:theImageView];
+            [theView addSubview:theHighlightedImageView];
+            
+            [self.collectionView addSubview:theView];
             
             self.selectedItemIndexPath = theIndexPathOfSelectedItem;
-            self.currentView = theImageView;
-            self.currentViewCenter = theImageView.center;
+            self.currentView = theView;
+            self.currentViewCenter = theView.center;
+            
+            theImageView.alpha = 0.0f;
+            theHighlightedImageView.alpha = 1.0f;
             
             [UIView
              animateWithDuration:0.3
              animations:^{
-                 theImageView.transform = CGAffineTransformMakeScale(1.1f, 1.1f);
+                 theView.transform = CGAffineTransformMakeScale(1.1f, 1.1f);
+                 theImageView.alpha = 1.0f;
                  theHighlightedImageView.alpha = 0.0f;
              }
              completion:^(BOOL finished) {

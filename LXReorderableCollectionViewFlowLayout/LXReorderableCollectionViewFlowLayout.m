@@ -100,10 +100,26 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
         } break;
             
         case LXReorderableCollectionViewFlowLayoutScrollingDirectionLeft: {
-            
+            CGFloat theDistance = -(self.scrollingSpeed / LX_FRAMES_PER_SECOND);
+            CGPoint theContentOffset = self.collectionView.contentOffset;
+            CGFloat theMinY = 0.0f;
+            if ((theContentOffset.y + theDistance) <= theMinY) {
+                theDistance = -theContentOffset.y;
+            }
+            self.collectionView.contentOffset = LXS_CGPointAdd(theContentOffset, CGPointMake(theDistance, 0.0f));
+            self.currentViewCenter = LXS_CGPointAdd(self.currentViewCenter, CGPointMake(theDistance, 0.0f));
+            self.currentView.center = LXS_CGPointAdd(self.currentViewCenter, self.panTranslationInCollectionView);
         } break;
         case LXReorderableCollectionViewFlowLayoutScrollingDirectionRight: {
-            
+            CGFloat theDistance = (self.scrollingSpeed / LX_FRAMES_PER_SECOND);
+            CGPoint theContentOffset = self.collectionView.contentOffset;
+            CGFloat theMinY = 0.0f;
+            if ((theContentOffset.y + theDistance) <= theMinY) {
+                theDistance = -theContentOffset.y;
+            }
+            self.collectionView.contentOffset = LXS_CGPointAdd(theContentOffset, CGPointMake(theDistance, 0.0f));
+            self.currentViewCenter = LXS_CGPointAdd(self.currentViewCenter, CGPointMake(theDistance, 0.0f));
+            self.currentView.center = LXS_CGPointAdd(self.currentViewCenter, self.panTranslationInCollectionView);
         } break;
             
         default: {

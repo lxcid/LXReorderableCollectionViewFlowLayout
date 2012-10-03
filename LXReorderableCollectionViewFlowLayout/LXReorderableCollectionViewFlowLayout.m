@@ -66,8 +66,12 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
             id<LXReorderableCollectionViewDelegateFlowLayout> theDelegate = (id<LXReorderableCollectionViewDelegateFlowLayout>)self.collectionView.delegate;
             [theDelegate itemAtIndexPath:thePreviousSelectedIndexPath willMoveToIndexPath:theIndexPathOfSelectedItem];
         }
-        [self.collectionView moveItemAtIndexPath:thePreviousSelectedIndexPath toIndexPath:theIndexPathOfSelectedItem];
-        [self invalidateLayout];
+        [self.collectionView performBatchUpdates:^{
+            //[self.collectionView moveItemAtIndexPath:thePreviousSelectedIndexPath toIndexPath:theIndexPathOfSelectedItem];
+            [self.collectionView deleteItemsAtIndexPaths:@[ thePreviousSelectedIndexPath ]];
+            [self.collectionView insertItemsAtIndexPaths:@[ theIndexPathOfSelectedItem ]];
+        } completion:^(BOOL finished) {
+        }];
     }
 }
 

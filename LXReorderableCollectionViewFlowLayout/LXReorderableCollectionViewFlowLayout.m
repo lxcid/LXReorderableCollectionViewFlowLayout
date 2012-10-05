@@ -43,6 +43,7 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
     self.scrollingSpeed = 300.0f;
     [self.scrollingTimer invalidate];
     self.scrollingTimer = nil;
+    self.alwaysScroll = YES;
 }
 
 - (void)awakeFromNib {
@@ -356,6 +357,25 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
     
     return theLayoutAttributes;
     
+}
+
+- (CGSize)collectionViewContentSize {
+    CGSize theCollectionViewContentSize = [super collectionViewContentSize];
+    if (self.alwaysScroll) {
+        switch (self.scrollDirection) {
+            case UICollectionViewScrollDirectionVertical: {
+                if (theCollectionViewContentSize.height <= CGRectGetHeight(self.collectionView.bounds)) {
+                    theCollectionViewContentSize.height = CGRectGetHeight(self.collectionView.bounds) + 1.0f;
+                }
+            } break;
+            case UICollectionViewScrollDirectionHorizontal: {
+                if (theCollectionViewContentSize.width <= CGRectGetWidth(self.collectionView.bounds)) {
+                    theCollectionViewContentSize.width = CGRectGetWidth(self.collectionView.bounds) + 1.0f;
+                }
+            } break;
+        }
+    }
+    return theCollectionViewContentSize;
 }
 
 #pragma mark - UIGestureRecognizerDelegate methods

@@ -331,7 +331,13 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
     NSArray *theLayoutAttributesForElementsInRect = [super layoutAttributesForElementsInRect:theRect];
     
     for (UICollectionViewLayoutAttributes *theLayoutAttributes in theLayoutAttributesForElementsInRect) {
-        [self applyLayoutAttributes:theLayoutAttributes];
+        switch (theLayoutAttributes.representedElementCategory) {
+            case UICollectionElementCategoryCell: {
+                [self applyLayoutAttributes:theLayoutAttributes];
+            } break;
+            default: {
+            } break;
+        }
     }
     
     return theLayoutAttributesForElementsInRect;
@@ -340,7 +346,13 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
 - (UICollectionViewLayoutAttributes *)layoutAttributesForItemAtIndexPath:(NSIndexPath *)theIndexPath {
     UICollectionViewLayoutAttributes *theLayoutAttributes = [super layoutAttributesForItemAtIndexPath:theIndexPath];
     
-    [self applyLayoutAttributes:theLayoutAttributes];
+    switch (theLayoutAttributes.representedElementCategory) {
+        case UICollectionElementCategoryCell: {
+            [self applyLayoutAttributes:theLayoutAttributes];
+        } break;
+        default: {
+        } break;
+    }
     
     return theLayoutAttributes;
     

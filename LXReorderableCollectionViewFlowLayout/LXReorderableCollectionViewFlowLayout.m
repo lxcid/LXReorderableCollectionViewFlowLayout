@@ -94,7 +94,7 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
         case LXReorderableCollectionViewFlowLayoutScrollingDirectionDown: {
             CGFloat theDistance = (self.scrollingSpeed / LX_FRAMES_PER_SECOND);
             CGPoint theContentOffset = self.collectionView.contentOffset;
-            CGFloat theMaxY = self.collectionView.contentSize.height - CGRectGetHeight(self.collectionView.bounds);
+            CGFloat theMaxY = MAX(self.collectionView.contentSize.height, CGRectGetHeight(self.collectionView.bounds)) - CGRectGetHeight(self.collectionView.bounds);
             if ((theContentOffset.y + theDistance) >= theMaxY) {
                 theDistance = theMaxY - theContentOffset.y;
             }

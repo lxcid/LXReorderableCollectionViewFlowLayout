@@ -27,7 +27,7 @@ Getting Started
 
  4. The collection view controller that is to support reordering capability must conforms to `LXReorderableCollectionViewDelegateFlowLayout` protocol. For example,
 
-        - (void)itemAtIndexPath:(NSIndexPath *)theFromIndexPath willMoveToIndexPath:(NSIndexPath *)theToIndexPath {
+        - (void)collectionView:(UICollectionView *)theCollectionView layout:(UICollectionViewLayout *)theLayout itemAtIndexPath:(NSIndexPath *)theFromIndexPath willMoveToIndexPath:(NSIndexPath *)theToIndexPath {
             id theFromItem = [self.deck objectAtIndex:theFromIndexPath.item];
             [self.deck removeObjectAtIndex:theFromIndexPath.item];
             [self.deck insertObject:theFromItem atIndex:theToIndexPath.item];

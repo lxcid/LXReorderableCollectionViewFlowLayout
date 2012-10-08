@@ -138,6 +138,13 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
             CGPoint theLocationInCollectionView = [theLongPressGestureRecognizer locationInView:self.collectionView];
             NSIndexPath *theIndexPathOfSelectedItem = [self.collectionView indexPathForItemAtPoint:theLocationInCollectionView];
             
+            if ([self.collectionView.delegate conformsToProtocol:@protocol(LXReorderableCollectionViewDelegateFlowLayout)]) {
+                id<LXReorderableCollectionViewDelegateFlowLayout> theDelegate = (id<LXReorderableCollectionViewDelegateFlowLayout>)self.collectionView.delegate;
+                if ([theDelegate respondsToSelector:@selector(collectionView:layout:willBeginReorderingAtIndexPath:)]) {
+                    [theDelegate collectionView:self.collectionView layout:self willBeginReorderingAtIndexPath:theIndexPathOfSelectedItem];
+                }
+            }
+            
             UICollectionViewCell *theCollectionViewCell = [self.collectionView cellForItemAtIndexPath:theIndexPathOfSelectedItem];
             
             theCollectionViewCell.highlighted = YES;
@@ -181,12 +188,27 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
              }
              completion:^(BOOL finished) {
                  [theHighlightedImageView removeFromSuperview];
+                 
+                 if ([self.collectionView.delegate conformsToProtocol:@protocol(LXReorderableCollectionViewDelegateFlowLayout)]) {
+                     id<LXReorderableCollectionViewDelegateFlowLayout> theDelegate = (id<LXReorderableCollectionViewDelegateFlowLayout>)self.collectionView.delegate;
+                     if ([theDelegate respondsToSelector:@selector(collectionView:layout:didBeginReorderingAtIndexPath:)]) {
+                         [theDelegate collectionView:self.collectionView layout:self didBeginReorderingAtIndexPath:theIndexPathOfSelectedItem];
+                     }
+                 }
              }];
             
             [self invalidateLayout];
         } break;
         case UIGestureRecognizerStateEnded: {
             NSIndexPath *theIndexPathOfSelectedItem = self.selectedItemIndexPath;
+            
+            if ([self.collectionView.delegate conformsToProtocol:@protocol(LXReorderableCollectionViewDelegateFlowLayout)]) {
+                id<LXReorderableCollectionViewDelegateFlowLayout> theDelegate = (id<LXReorderableCollectionViewDelegateFlowLayout>)self.collectionView.delegate;
+                if ([theDelegate respondsToSelector:@selector(collectionView:layout:willEndReorderingAtIndexPath:)]) {
+                    [theDelegate collectionView:self.collectionView layout:self willEndReorderingAtIndexPath:theIndexPathOfSelectedItem];
+                }
+            }
+            
             self.selectedItemIndexPath = nil;
             self.currentViewCenter = CGPointZero;
             
@@ -206,6 +228,13 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
                  
                  [theStrongSelf.currentView removeFromSuperview];
                  [theStrongSelf invalidateLayout];
+                 
+                 if ([self.collectionView.delegate conformsToProtocol:@protocol(LXReorderableCollectionViewDelegateFlowLayout)]) {
+                     id<LXReorderableCollectionViewDelegateFlowLayout> theDelegate = (id<LXReorderableCollectionViewDelegateFlowLayout>)self.collectionView.delegate;
+                     if ([theDelegate respondsToSelector:@selector(collectionView:layout:didEndReorderingAtIndexPath:)]) {
+                         [theDelegate collectionView:self.collectionView layout:self didEndReorderingAtIndexPath:theIndexPathOfSelectedItem];
+                     }
+                 }
              }];
         } break;
         default: {

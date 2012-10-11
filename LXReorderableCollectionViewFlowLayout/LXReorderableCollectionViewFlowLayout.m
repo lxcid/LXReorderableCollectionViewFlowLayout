@@ -30,6 +30,13 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
 
 - (void)setUpGestureRecognizersOnCollectionView {
     UILongPressGestureRecognizer *theLongPressGestureRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleLongPressGesture:)];
+    // Links the default long press gesture recognizer to the custom long press gesture recognizer we are creating now
+    // by enforcing failure dependency so that they doesn't clash.
+    for (UIGestureRecognizer *theGestureRecognizer in self.collectionView.gestureRecognizers) {
+        if ([theGestureRecognizer isKindOfClass:[UILongPressGestureRecognizer class]]) {
+            [theGestureRecognizer requireGestureRecognizerToFail:theLongPressGestureRecognizer];
+        }
+    }
     theLongPressGestureRecognizer.delegate = self;
     [self.collectionView addGestureRecognizer:theLongPressGestureRecognizer];
     self.longPressGestureRecognizer = theLongPressGestureRecognizer;

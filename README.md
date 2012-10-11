@@ -35,6 +35,13 @@ Getting Started
 
  5. Setup your collection view accordingly to your need, run and see it in action! :D
 
+Limitations
+===========
+
+Collection view come with a default long press gesture recognizer and because we defined our own custom long press gesture recognizer, we created a link between them that requires the custom one to fails before the default one can began.
+
+In short, we took over the responsibility of long press gesture with the custom one from the default one. You can disable the custom long press gesture recognizer with the following code snippet, `self.longPressGestureRecognizer.enabled = YES`, which enabled the default behavior again.
+
 Requirements
 ============
 

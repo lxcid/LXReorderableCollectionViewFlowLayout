@@ -23,6 +23,9 @@
 
 @property (assign, nonatomic) BOOL alwaysScroll;
 
+@property (strong, nonatomic) NSTimer *invalidateLayoutTimer;
+@property (strong, nonatomic) NSIndexPath *catchItemIndexPath;
+
 - (void)setUpGestureRecognizersOnCollectionView;
 
 @end
@@ -37,5 +40,7 @@
 - (void)collectionView:(UICollectionView *)theCollectionView layout:(UICollectionViewLayout *)theLayout didBeginReorderingAtIndexPath:(NSIndexPath *)theIndexPath;
 - (void)collectionView:(UICollectionView *)theCollectionView layout:(UICollectionViewLayout *)theLayout willEndReorderingAtIndexPath:(NSIndexPath *)theIndexPath;
 - (void)collectionView:(UICollectionView *)theCollectionView layout:(UICollectionViewLayout *)theLayout didEndReorderingAtIndexPath:(NSIndexPath *)theIndexPath;
+- (BOOL)collectionView:(UICollectionView *)theCollectionView layout:(UICollectionViewLayout *)theLayout shouldDropIndexPath:(NSIndexPath *)theDropIndexPath onIndexPath:(NSIndexPath *)theCatchIndexPath;
+- (void)collectionView:(UICollectionView *)theCollectionView layout:(UICollectionViewLayout *)theLayout willDropIndexPath:(NSIndexPath *)theDropIndexPath onIndexPath:(NSIndexPath *)theCatchIndexPath;
 
 @end

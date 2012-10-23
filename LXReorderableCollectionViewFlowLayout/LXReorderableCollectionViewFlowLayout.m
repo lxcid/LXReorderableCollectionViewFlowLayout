@@ -65,21 +65,83 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
     }
 }
 
-- (void)invalidateLayoutIfNecessary {
-    NSIndexPath *theIndexPathOfSelectedItem = [self.collectionView indexPathForItemAtPoint:self.currentView.center];
-    if ((![theIndexPathOfSelectedItem isEqual:self.selectedItemIndexPath]) &&(theIndexPathOfSelectedItem)) {
+- (void)resetCatchItemIfNeeded {
+    if (self.catchItemIndexPath) {
+        [self.collectionView deselectItemAtIndexPath:self.catchItemIndexPath animated:YES];
+        self.catchItemIndexPath = nil;
+    }
+}
+
+- (void)moveCurrentItemToIndexPath:(NSIndexPath *)theIndexPathOfSelectedItem {
+    [self resetCatchItemIfNeeded];
+    
+    if (!theIndexPathOfSelectedItem) {
+        return;
+    }
+    
+    if (![theIndexPathOfSelectedItem isEqual:self.selectedItemIndexPath]) {
         NSIndexPath *thePreviousSelectedIndexPath = self.selectedItemIndexPath;
         self.selectedItemIndexPath = theIndexPathOfSelectedItem;
         if ([self.collectionView.delegate conformsToProtocol:@protocol(LXReorderableCollectionViewDelegateFlowLayout)]) {
             id<LXReorderableCollectionViewDelegateFlowLayout> theDelegate = (id<LXReorderableCollectionViewDelegateFlowLayout>)self.collectionView.delegate;
             [theDelegate collectionView:self.collectionView layout:self itemAtIndexPath:thePreviousSelectedIndexPath willMoveToIndexPath:theIndexPathOfSelectedItem];
+            
+            [self.collectionView performBatchUpdates:^{
+                //[self.collectionView moveItemAtIndexPath:thePreviousSelectedIndexPath toIndexPath:theIndexPathOfSelectedItem];
+                [self.collectionView deleteItemsAtIndexPaths:@[ thePreviousSelectedIndexPath ]];
+                [self.collectionView insertItemsAtIndexPaths:@[ theIndexPathOfSelectedItem ]];
+            } completion:^(BOOL finished) {
+            }];
         }
-        [self.collectionView performBatchUpdates:^{
-            //[self.collectionView moveItemAtIndexPath:thePreviousSelectedIndexPath toIndexPath:theIndexPathOfSelectedItem];
-            [self.collectionView deleteItemsAtIndexPaths:@[ thePreviousSelectedIndexPath ]];
-            [self.collectionView insertItemsAtIndexPaths:@[ theIndexPathOfSelectedItem ]];
-        } completion:^(BOOL finished) {
-        }];
+    }
+}
+
+- (void)dropCurrentItemOnIndexPath:(NSIndexPath *)theIndexPathOfSelectedItem {
+    if (!theIndexPathOfSelectedItem) {
+        [self resetCatchItemIfNeeded];
+        return;
+    }
+    
+    if (![theIndexPathOfSelectedItem isEqual:self.selectedItemIndexPath]) {
+        if (![theIndexPathOfSelectedItem isEqual:self.catchItemIndexPath]) {
+            if ([self.collectionView.delegate conformsToProtocol:@protocol(LXReorderableCollectionViewDelegateFlowLayout)]) {
+                id<LXReorderableCollectionViewDelegateFlowLayout> theDelegate = (id<LXReorderableCollectionViewDelegateFlowLayout>)self.collectionView.delegate;
+                // TOOD: (stan@buuuk.com) Method should be optional.
+                if ([theDelegate collectionView:self.collectionView layout:self shouldDropIndexPath:self.selectedItemIndexPath onIndexPath:theIndexPathOfSelectedItem]) {
+                    self.catchItemIndexPath = theIndexPathOfSelectedItem;
+                    [self.collectionView selectItemAtIndexPath:theIndexPathOfSelectedItem animated:YES scrollPosition:UICollectionViewScrollPositionNone];
+                } else {
+                    [self moveCurrentItemToIndexPath:theIndexPathOfSelectedItem];
+                }
+            }
+        }
+    } else {
+        [self resetCatchItemIfNeeded];
+    }
+}
+
+- (void)invalidateLayoutIfNecessary {
+    CGPoint theCurrentViewCenter = self.currentView.center;
+    NSIndexPath *theIndexPathOfSelectedItem = [self.collectionView indexPathForItemAtPoint:theCurrentViewCenter];
+    
+    UICollectionViewLayoutAttributes *theLayoutAttributesOfSelectedItem = [self layoutAttributesForItemAtIndexPath:theIndexPathOfSelectedItem];
+    CGRect theFrame = theLayoutAttributesOfSelectedItem.frame;
+    CGRect theLeftFrame;
+    CGRect theRightFrame;
+    CGRectDivide(theFrame, &theLeftFrame, &theRightFrame, CGRectGetWidth(theFrame) / 3.0f, CGRectMinXEdge);
+    
+    if (CGRectContainsPoint(theLeftFrame, theCurrentViewCenter)) {
+        if (self.selectedItemIndexPath.item > theIndexPathOfSelectedItem.item) {
+            [self moveCurrentItemToIndexPath:theIndexPathOfSelectedItem];
+        } else {
+            [self dropCurrentItemOnIndexPath:theIndexPathOfSelectedItem];
+        }
+    } else if (CGRectContainsPoint(theRightFrame, theCurrentViewCenter)) {
+        if (self.selectedItemIndexPath.item < theIndexPathOfSelectedItem.item) {
+            [self moveCurrentItemToIndexPath:theIndexPathOfSelectedItem];
+        } else {
+            [self dropCurrentItemOnIndexPath:theIndexPathOfSelectedItem];
+        }
     }
 }
 
@@ -208,6 +270,7 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
         } break;
         case UIGestureRecognizerStateEnded: {
             NSIndexPath *theIndexPathOfSelectedItem = self.selectedItemIndexPath;
+            NSIndexPath *theIndexPathOfCatchItem = self.catchItemIndexPath;
             
             if ([self.collectionView.delegate conformsToProtocol:@protocol(LXReorderableCollectionViewDelegateFlowLayout)]) {
                 id<LXReorderableCollectionViewDelegateFlowLayout> theDelegate = (id<LXReorderableCollectionViewDelegateFlowLayout>)self.collectionView.delegate;
@@ -219,7 +282,28 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
             self.selectedItemIndexPath = nil;
             self.currentViewCenter = CGPointZero;
             
-            UICollectionViewLayoutAttributes *theLayoutAttributes = [self layoutAttributesForItemAtIndexPath:theIndexPathOfSelectedItem];
+            if ([self.collectionView.delegate conformsToProtocol:@protocol(LXReorderableCollectionViewDelegateFlowLayout)]) {
+                id<LXReorderableCollectionViewDelegateFlowLayout> theDelegate = (id<LXReorderableCollectionViewDelegateFlowLayout>)self.collectionView.delegate;
+                if (theIndexPathOfCatchItem) {
+                    if ([theDelegate respondsToSelector:@selector(collectionView:layout:willDropIndexPath:onIndexPath:)]) {
+                        [theDelegate collectionView:self.collectionView layout:self willDropIndexPath:theIndexPathOfSelectedItem onIndexPath:theIndexPathOfCatchItem];
+                    }
+                    [self.collectionView deselectItemAtIndexPath:theIndexPathOfCatchItem animated:YES];
+                    [self.collectionView
+                     performBatchUpdates:^{
+                         [self.collectionView deleteItemsAtIndexPaths:@[ theIndexPathOfSelectedItem ]];
+                     }
+                     completion:^(BOOL theFinished) {
+                     }];
+                }
+            }
+            
+            UICollectionViewLayoutAttributes *theLayoutAttributes;
+            if (theIndexPathOfCatchItem) {
+                theLayoutAttributes = [self layoutAttributesForItemAtIndexPath:theIndexPathOfCatchItem];
+            } else {
+                theLayoutAttributes = [self layoutAttributesForItemAtIndexPath:theIndexPathOfSelectedItem];
+            }
             
             __weak LXReorderableCollectionViewFlowLayout *theWeakSelf = self;
             [UIView
@@ -227,8 +311,13 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
              animations:^{
                  __strong LXReorderableCollectionViewFlowLayout *theStrongSelf = theWeakSelf;
                  
-                 theStrongSelf.currentView.transform = CGAffineTransformMakeScale(1.0f, 1.0f);
-                 theStrongSelf.currentView.center = theLayoutAttributes.center;
+                 if (theIndexPathOfCatchItem) {
+                     theStrongSelf.currentView.transform = CGAffineTransformMakeScale(0.01f, 0.01f);
+                     theStrongSelf.currentView.center = theLayoutAttributes.center;
+                 } else {
+                     theStrongSelf.currentView.transform = CGAffineTransformMakeScale(1.0f, 1.0f);
+                     theStrongSelf.currentView.center = theLayoutAttributes.center;
+                 }
              }
              completion:^(BOOL finished) {
                  __strong LXReorderableCollectionViewFlowLayout *theStrongSelf = theWeakSelf;
@@ -243,6 +332,8 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
                      }
                  }
              }];
+            
+            [self resetCatchItemIfNeeded];
         } break;
         default: {
         } break;
@@ -258,7 +349,11 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
             CGPoint theLocationInCollectionView = LXS_CGPointAdd(self.currentViewCenter, self.panTranslationInCollectionView);
             self.currentView.center = theLocationInCollectionView;
             
-            [self invalidateLayoutIfNecessary];
+            if (self.invalidateLayoutTimer) {
+                [self.invalidateLayoutTimer invalidate];
+                self.invalidateLayoutTimer = nil;
+            }
+            self.invalidateLayoutTimer = [NSTimer scheduledTimerWithTimeInterval:0.1f target:self selector:@selector(invalidateLayoutIfNecessary) userInfo:nil repeats:NO];
             
             switch (self.scrollDirection) {
                 case UICollectionViewScrollDirectionVertical: {
@@ -352,6 +447,10 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
             }
         } break;
         case UIGestureRecognizerStateEnded: {
+            if (self.invalidateLayoutTimer) {
+                [self.invalidateLayoutTimer invalidate];
+                self.invalidateLayoutTimer = nil;
+            }
             if (self.scrollingTimer) {
                 [self.scrollingTimer invalidate];
                 self.scrollingTimer = nil;

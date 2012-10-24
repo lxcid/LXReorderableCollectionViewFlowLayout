@@ -79,44 +79,59 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
         return;
     }
     
-    if (![theIndexPathOfSelectedItem isEqual:self.selectedItemIndexPath]) {
-        NSIndexPath *thePreviousSelectedIndexPath = self.selectedItemIndexPath;
-        self.selectedItemIndexPath = theIndexPathOfSelectedItem;
-        if ([self.collectionView.delegate conformsToProtocol:@protocol(LXReorderableCollectionViewDelegateFlowLayout)]) {
-            id<LXReorderableCollectionViewDelegateFlowLayout> theDelegate = (id<LXReorderableCollectionViewDelegateFlowLayout>)self.collectionView.delegate;
-            [theDelegate collectionView:self.collectionView layout:self itemAtIndexPath:thePreviousSelectedIndexPath willMoveToIndexPath:theIndexPathOfSelectedItem];
-            
-            [self.collectionView performBatchUpdates:^{
-                //[self.collectionView moveItemAtIndexPath:thePreviousSelectedIndexPath toIndexPath:theIndexPathOfSelectedItem];
-                [self.collectionView deleteItemsAtIndexPaths:@[ thePreviousSelectedIndexPath ]];
-                [self.collectionView insertItemsAtIndexPaths:@[ theIndexPathOfSelectedItem ]];
-            } completion:^(BOOL finished) {
-            }];
-        }
+    if ([theIndexPathOfSelectedItem isEqual:self.selectedItemIndexPath]) { // If theIndexPathOfSelectedItem is equals to current selectedItemIndexPath...
+        return;
     }
+    
+    NSIndexPath *thePreviousSelectedIndexPath = self.selectedItemIndexPath;
+    self.selectedItemIndexPath = theIndexPathOfSelectedItem;
+    
+    if (![self.collectionView.delegate conformsToProtocol:@protocol(LXReorderableCollectionViewDelegateFlowLayout)]) { // If collectionView delegate does not conforms to LXReorderableCollectionViewDelegateFlowLayout... (If the variable is populated, then there's a serious issue here)
+        return;
+    }
+    
+    id<LXReorderableCollectionViewDelegateFlowLayout> theDelegate = (id<LXReorderableCollectionViewDelegateFlowLayout>)self.collectionView.delegate;
+    [theDelegate collectionView:self.collectionView layout:self itemAtIndexPath:thePreviousSelectedIndexPath willMoveToIndexPath:theIndexPathOfSelectedItem];
+    
+    [self.collectionView performBatchUpdates:^{
+        //[self.collectionView moveItemAtIndexPath:thePreviousSelectedIndexPath toIndexPath:theIndexPathOfSelectedItem];
+        [self.collectionView deleteItemsAtIndexPaths:@[ thePreviousSelectedIndexPath ]];
+        [self.collectionView insertItemsAtIndexPaths:@[ theIndexPathOfSelectedItem ]];
+    } completion:^(BOOL finished) {
+    }];
 }
 
 - (void)dropCurrentItemOnIndexPath:(NSIndexPath *)theIndexPathOfSelectedItem {
-    if (!theIndexPathOfSelectedItem) {
+    if (!theIndexPathOfSelectedItem) { // If theIndexPathOfSelectedItem is not available...
         [self resetCatchItemIfNeeded];
         return;
     }
     
-    if (![theIndexPathOfSelectedItem isEqual:self.selectedItemIndexPath]) {
-        if (![theIndexPathOfSelectedItem isEqual:self.catchItemIndexPath]) {
-            if ([self.collectionView.delegate conformsToProtocol:@protocol(LXReorderableCollectionViewDelegateFlowLayout)]) {
-                id<LXReorderableCollectionViewDelegateFlowLayout> theDelegate = (id<LXReorderableCollectionViewDelegateFlowLayout>)self.collectionView.delegate;
-                // TOOD: (stan@buuuk.com) Method should be optional.
-                if ([theDelegate collectionView:self.collectionView layout:self shouldDropIndexPath:self.selectedItemIndexPath onIndexPath:theIndexPathOfSelectedItem]) {
-                    self.catchItemIndexPath = theIndexPathOfSelectedItem;
-                    [self.collectionView selectItemAtIndexPath:theIndexPathOfSelectedItem animated:YES scrollPosition:UICollectionViewScrollPositionNone];
-                } else {
-                    [self moveCurrentItemToIndexPath:theIndexPathOfSelectedItem];
-                }
-            }
-        }
-    } else {
+    if ([theIndexPathOfSelectedItem isEqual:self.selectedItemIndexPath]) { // If theIndexPathOfSelectedItem is equals to current selectedItemIndexPath... 
         [self resetCatchItemIfNeeded];
+        return;
+    }
+    
+    if ([theIndexPathOfSelectedItem isEqual:self.catchItemIndexPath]) { // If theIndexPathOfSelectedItem is equals to current catchItemIndexPath...
+        return;
+    }
+    
+    if (![self.collectionView.delegate conformsToProtocol:@protocol(LXReorderableCollectionViewDelegateFlowLayout)]) { // If collectionView delegate does not conforms to LXReorderableCollectionViewDelegateFlowLayout... (If the variable is populated, then there's a serious issue here)
+        return;
+    }
+    
+    id<LXReorderableCollectionViewDelegateFlowLayout> theDelegate = (id<LXReorderableCollectionViewDelegateFlowLayout>)self.collectionView.delegate;
+    
+    if (![theDelegate respondsToSelector:@selector(collectionView:layout:shouldDropIndexPath:onIndexPath:)]) { // If it response to collectionView:layout:shouldDropIndexPath:onIndexPath:...
+        [self moveCurrentItemToIndexPath:theIndexPathOfSelectedItem];
+        return;
+    }
+    
+    if ([theDelegate collectionView:self.collectionView layout:self shouldDropIndexPath:self.selectedItemIndexPath onIndexPath:theIndexPathOfSelectedItem]) {
+        self.catchItemIndexPath = theIndexPathOfSelectedItem;
+        [self.collectionView selectItemAtIndexPath:theIndexPathOfSelectedItem animated:YES scrollPosition:UICollectionViewScrollPositionNone];
+    } else {
+        [self moveCurrentItemToIndexPath:theIndexPathOfSelectedItem];
     }
 }
 

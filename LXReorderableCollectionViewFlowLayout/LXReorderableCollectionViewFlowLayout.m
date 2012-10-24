@@ -307,6 +307,7 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
                     [self.collectionView
                      performBatchUpdates:^{
                          [self.collectionView deleteItemsAtIndexPaths:@[ theIndexPathOfSelectedItem ]];
+                         [self.collectionView reloadItemsAtIndexPaths:@[ theIndexPathOfCatchItem ]];
                      }
                      completion:^(BOOL theFinished) {
                      }];

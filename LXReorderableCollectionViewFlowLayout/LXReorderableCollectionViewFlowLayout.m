@@ -143,7 +143,7 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
     CGRect theFrame = theLayoutAttributesOfSelectedItem.frame;
     CGRect theLeftFrame;
     CGRect theRightFrame;
-    CGRectDivide(theFrame, &theLeftFrame, &theRightFrame, CGRectGetWidth(theFrame) / 3.0f, CGRectMinXEdge);
+    CGRectDivide(theFrame, &theLeftFrame, &theRightFrame, CGRectGetWidth(theFrame) / 2.0f, CGRectMinXEdge);
     
     if (CGRectContainsPoint(theLeftFrame, theCurrentViewCenter)) {
         if (self.selectedItemIndexPath.item > theIndexPathOfSelectedItem.item) {

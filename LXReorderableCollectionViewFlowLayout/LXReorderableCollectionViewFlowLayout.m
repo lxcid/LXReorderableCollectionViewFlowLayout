@@ -70,10 +70,29 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
     if ((![theIndexPathOfSelectedItem isEqual:self.selectedItemIndexPath]) &&(theIndexPathOfSelectedItem)) {
         NSIndexPath *thePreviousSelectedIndexPath = self.selectedItemIndexPath;
         self.selectedItemIndexPath = theIndexPathOfSelectedItem;
-        if ([self.collectionView.delegate conformsToProtocol:@protocol(LXReorderableCollectionViewDelegateFlowLayout)]) {
-            id<LXReorderableCollectionViewDelegateFlowLayout> theDelegate = (id<LXReorderableCollectionViewDelegateFlowLayout>)self.collectionView.delegate;
-            [theDelegate collectionView:self.collectionView layout:self itemAtIndexPath:thePreviousSelectedIndexPath willMoveToIndexPath:theIndexPathOfSelectedItem];
+        
+        id<LXReorderableCollectionViewDelegateFlowLayout> theDelegate = (id<LXReorderableCollectionViewDelegateFlowLayout>) self.collectionView.delegate;
+        
+        if([theDelegate conformsToProtocol:@protocol(LXReorderableCollectionViewDelegateFlowLayout)]){
+            
+            // Check with the delegate to see if this move is even allowed.
+            if([theDelegate respondsToSelector:@selector(collectionView:layout:itemAtIndexPath:shouldMoveToIndexPath:)]){
+                BOOL shouldMove = [theDelegate collectionView:self.collectionView
+                                                       layout:self
+                                              itemAtIndexPath:thePreviousSelectedIndexPath
+                                        shouldMoveToIndexPath:theIndexPathOfSelectedItem];
+                
+                if(!shouldMove) return;
+            }
+            
+            // Proceed with the move
+            [theDelegate collectionView:self.collectionView
+                                 layout:self
+                        itemAtIndexPath:thePreviousSelectedIndexPath
+                    willMoveToIndexPath:theIndexPathOfSelectedItem];
         }
+            
+         
         [self.collectionView performBatchUpdates:^{
             //[self.collectionView moveItemAtIndexPath:thePreviousSelectedIndexPath toIndexPath:theIndexPathOfSelectedItem];
             [self.collectionView deleteItemsAtIndexPaths:@[ thePreviousSelectedIndexPath ]];

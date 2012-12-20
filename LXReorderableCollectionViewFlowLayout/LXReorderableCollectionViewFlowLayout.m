@@ -164,8 +164,14 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
             CGPoint theLocationInCollectionView = [theLongPressGestureRecognizer locationInView:self.collectionView];
             NSIndexPath *theIndexPathOfSelectedItem = [self.collectionView indexPathForItemAtPoint:theLocationInCollectionView];
             
+            
             if ([self.collectionView.delegate conformsToProtocol:@protocol(LXReorderableCollectionViewDelegateFlowLayout)]) {
                 id<LXReorderableCollectionViewDelegateFlowLayout> theDelegate = (id<LXReorderableCollectionViewDelegateFlowLayout>)self.collectionView.delegate;
+                if ([theDelegate respondsToSelector:@selector(collectionView:layout:shouldBeginReorderingAtIndexPath:)]) {
+                    BOOL shouldStartReorder =  [theDelegate collectionView:self.collectionView layout:self shouldBeginReorderingAtIndexPath:theIndexPathOfSelectedItem];
+                    if(!shouldStartReorder) return;
+                }
+                
                 if ([theDelegate respondsToSelector:@selector(collectionView:layout:willBeginReorderingAtIndexPath:)]) {
                     [theDelegate collectionView:self.collectionView layout:self willBeginReorderingAtIndexPath:theIndexPathOfSelectedItem];
                 }

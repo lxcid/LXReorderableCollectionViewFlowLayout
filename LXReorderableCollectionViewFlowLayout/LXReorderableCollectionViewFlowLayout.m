@@ -73,16 +73,18 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
         
         id<LXReorderableCollectionViewDelegateFlowLayout> theDelegate = (id<LXReorderableCollectionViewDelegateFlowLayout>) self.collectionView.delegate;
         
-        if([theDelegate conformsToProtocol:@protocol(LXReorderableCollectionViewDelegateFlowLayout)]){
+        if ([theDelegate conformsToProtocol:@protocol(LXReorderableCollectionViewDelegateFlowLayout)]) {
             
             // Check with the delegate to see if this move is even allowed.
-            if([theDelegate respondsToSelector:@selector(collectionView:layout:itemAtIndexPath:shouldMoveToIndexPath:)]){
+            if ([theDelegate respondsToSelector:@selector(collectionView:layout:itemAtIndexPath:shouldMoveToIndexPath:)]) {
                 BOOL shouldMove = [theDelegate collectionView:self.collectionView
                                                        layout:self
                                               itemAtIndexPath:thePreviousSelectedIndexPath
                                         shouldMoveToIndexPath:theIndexPathOfSelectedItem];
                 
-                if(!shouldMove) return;
+                if (!shouldMove) {
+                    return;
+                }
             }
             
             // Proceed with the move
@@ -91,8 +93,7 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
                         itemAtIndexPath:thePreviousSelectedIndexPath
                     willMoveToIndexPath:theIndexPathOfSelectedItem];
         }
-            
-         
+        
         [self.collectionView performBatchUpdates:^{
             //[self.collectionView moveItemAtIndexPath:thePreviousSelectedIndexPath toIndexPath:theIndexPathOfSelectedItem];
             [self.collectionView deleteItemsAtIndexPaths:@[ thePreviousSelectedIndexPath ]];
@@ -164,12 +165,13 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
             CGPoint theLocationInCollectionView = [theLongPressGestureRecognizer locationInView:self.collectionView];
             NSIndexPath *theIndexPathOfSelectedItem = [self.collectionView indexPathForItemAtPoint:theLocationInCollectionView];
             
-            
             if ([self.collectionView.delegate conformsToProtocol:@protocol(LXReorderableCollectionViewDelegateFlowLayout)]) {
                 id<LXReorderableCollectionViewDelegateFlowLayout> theDelegate = (id<LXReorderableCollectionViewDelegateFlowLayout>)self.collectionView.delegate;
                 if ([theDelegate respondsToSelector:@selector(collectionView:layout:shouldBeginReorderingAtIndexPath:)]) {
                     BOOL shouldStartReorder =  [theDelegate collectionView:self.collectionView layout:self shouldBeginReorderingAtIndexPath:theIndexPathOfSelectedItem];
-                    if(!shouldStartReorder) return;
+                    if (!shouldStartReorder) {
+                        return;
+                    }
                 }
                 
                 if ([theDelegate respondsToSelector:@selector(collectionView:layout:willBeginReorderingAtIndexPath:)]) {

@@ -219,8 +219,7 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
             self.selectedItemIndexPath = nil;
             self.currentViewCenter = CGPointZero;
             
-            if ( theIndexPathOfSelectedItem )
-            {
+            if (theIndexPathOfSelectedItem) {
                 UICollectionViewLayoutAttributes *theLayoutAttributes = [self layoutAttributesForItemAtIndexPath:theIndexPathOfSelectedItem];
                 
                 __weak LXReorderableCollectionViewFlowLayout *theWeakSelf = self;
@@ -366,61 +365,35 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
 }
 
 #pragma mark - UICollectionViewFlowLayoutDelegate methods
-- (NSArray*)layoutAttributesForElementsInRect: (CGRect)rect
-{
-    NSArray* arr = [super layoutAttributesForElementsInRect: rect];
-    for ( UICollectionViewLayoutAttributes* atts in arr )
-    {
-        switch ( atts.representedElementCategory )
-        {
-            case UICollectionElementCategoryCell:
-                [self applyLayoutAttributes: atts];
-                break;
-            default:
-                break;
-        }
-        
-        if ( !atts.representedElementKind )
-        {
-            NSIndexPath* ip = atts.indexPath;
-            atts.frame = [self layoutAttributesForItemAtIndexPath: ip].frame;
+
+- (NSArray *)layoutAttributesForElementsInRect:(CGRect)theRect {
+    NSArray *theLayoutAttributesForElementsInRect = [super layoutAttributesForElementsInRect:theRect];
+    
+    for (UICollectionViewLayoutAttributes *theLayoutAttributes in theLayoutAttributesForElementsInRect) {
+        switch (theLayoutAttributes.representedElementCategory) {
+            case UICollectionElementCategoryCell: {
+                [self applyLayoutAttributes:theLayoutAttributes];
+            } break;
+            default: {
+            } break;
         }
     }
     
-    return arr;
+    return theLayoutAttributesForElementsInRect;
 }
 
-- (UICollectionViewLayoutAttributes*)layoutAttributesForItemAtIndexPath: (NSIndexPath*)indexPath
-{
-    UICollectionViewLayoutAttributes* atts = [super layoutAttributesForItemAtIndexPath: indexPath];
+- (UICollectionViewLayoutAttributes *)layoutAttributesForItemAtIndexPath:(NSIndexPath *)theIndexPath {
+    UICollectionViewLayoutAttributes *theLayoutAttributes = [super layoutAttributesForItemAtIndexPath:theIndexPath];
     
-    //
-    switch ( atts.representedElementCategory )
-    {
-        case UICollectionElementCategoryCell:
-            [self applyLayoutAttributes: atts];
-            break;
-        default:
-            break;
+    switch (theLayoutAttributes.representedElementCategory) {
+        case UICollectionElementCategoryCell: {
+            [self applyLayoutAttributes:theLayoutAttributes];
+        } break;
+        default: {
+        } break;
     }
     
-    if ( indexPath.item != 0 ) // make sure that we're not the first item of a section
-    {
-        NSIndexPath* ipPrev = [NSIndexPath indexPathForItem: indexPath.item - 1
-                                                  inSection: indexPath.section];
-        
-        CGRect fPrev = [self layoutAttributesForItemAtIndexPath: ipPrev].frame;
-        CGFloat rightPrev = fPrev.origin.x + fPrev.size.width + 10;
-        
-        if ( atts.frame.origin.x > rightPrev ) // make sure that we're not the first item of a line
-        {
-            CGRect f = atts.frame;
-            f.origin.x = rightPrev;
-            atts.frame = f;
-        }
-    }
-    
-    return atts;
+    return theLayoutAttributes;
 }
 
 - (CGSize)collectionViewContentSize {

@@ -182,13 +182,13 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
             UICollectionViewCell *theCollectionViewCell = [self.collectionView cellForItemAtIndexPath:theIndexPathOfSelectedItem];
             
             theCollectionViewCell.highlighted = YES;
-            UIGraphicsBeginImageContextWithOptions(theCollectionViewCell.bounds.size, theCollectionViewCell.opaque, 0.0f);
+            UIGraphicsBeginImageContextWithOptions(theCollectionViewCell.bounds.size, NO, 0.0f);
             [theCollectionViewCell.layer renderInContext:UIGraphicsGetCurrentContext()];
             UIImage *theHighlightedImage = UIGraphicsGetImageFromCurrentImageContext();
             UIGraphicsEndImageContext();
             
             theCollectionViewCell.highlighted = NO;
-            UIGraphicsBeginImageContextWithOptions(theCollectionViewCell.bounds.size, theCollectionViewCell.opaque, 0.0f);
+            UIGraphicsBeginImageContextWithOptions(theCollectionViewCell.bounds.size, NO, 0.0f);
             [theCollectionViewCell.layer renderInContext:UIGraphicsGetCurrentContext()];
             UIImage *theImage = UIGraphicsGetImageFromCurrentImageContext();
             UIGraphicsEndImageContext();

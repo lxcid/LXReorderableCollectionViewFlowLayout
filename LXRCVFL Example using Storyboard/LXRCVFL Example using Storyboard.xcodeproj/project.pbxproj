@@ -298,6 +298,7 @@
 				GCC_PREFIX_HEADER = "LXRCVFL Example using Storyboard/LXRCVFL Example using Storyboard-Prefix.pch";
 				INFOPLIST_FILE = "LXRCVFL Example using Storyboard/LXRCVFL Example using Storyboard-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = 1;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -309,6 +310,7 @@
 				GCC_PREFIX_HEADER = "LXRCVFL Example using Storyboard/LXRCVFL Example using Storyboard-Prefix.pch";
 				INFOPLIST_FILE = "LXRCVFL Example using Storyboard/LXRCVFL Example using Storyboard-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = 1;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;
@@ -332,6 +334,7 @@
 				AB0E97E8161B4BEC005498A0 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

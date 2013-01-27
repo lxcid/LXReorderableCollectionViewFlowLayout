@@ -21,8 +21,6 @@
 @property (assign, nonatomic) CGPoint currentViewCenter;
 @property (assign, nonatomic) CGPoint panTranslationInCollectionView;
 
-@property (assign, nonatomic) BOOL alwaysScroll;
-
 - (void)setUpGestureRecognizersOnCollectionView;
 
 @end

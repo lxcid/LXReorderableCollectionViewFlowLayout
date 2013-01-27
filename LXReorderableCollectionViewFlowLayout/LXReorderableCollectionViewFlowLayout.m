@@ -50,7 +50,6 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
     self.scrollingSpeed = 300.0f;
     [self.scrollingTimer invalidate];
     self.scrollingTimer = nil;
-    self.alwaysScroll = YES;
 }
 
 - (void)awakeFromNib {
@@ -69,7 +68,6 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
     NSIndexPath *theIndexPathOfSelectedItem = [self.collectionView indexPathForItemAtPoint:self.currentView.center];
     if ((![theIndexPathOfSelectedItem isEqual:self.selectedItemIndexPath]) &&(theIndexPathOfSelectedItem)) {
         NSIndexPath *thePreviousSelectedIndexPath = self.selectedItemIndexPath;
-        self.selectedItemIndexPath = theIndexPathOfSelectedItem;
         
         id<LXReorderableCollectionViewDelegateFlowLayout> theDelegate = (id<LXReorderableCollectionViewDelegateFlowLayout>) self.collectionView.delegate;
         
@@ -86,6 +84,8 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
                     return;
                 }
             }
+            
+            self.selectedItemIndexPath = theIndexPathOfSelectedItem;
             
             // Proceed with the move
             [theDelegate collectionView:self.collectionView
@@ -182,13 +182,13 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
             UICollectionViewCell *theCollectionViewCell = [self.collectionView cellForItemAtIndexPath:theIndexPathOfSelectedItem];
             
             theCollectionViewCell.highlighted = YES;
-            UIGraphicsBeginImageContextWithOptions(theCollectionViewCell.bounds.size, theCollectionViewCell.opaque, 0.0f);
+            UIGraphicsBeginImageContextWithOptions(theCollectionViewCell.bounds.size, NO, 0.0f);
             [theCollectionViewCell.layer renderInContext:UIGraphicsGetCurrentContext()];
             UIImage *theHighlightedImage = UIGraphicsGetImageFromCurrentImageContext();
             UIGraphicsEndImageContext();
             
             theCollectionViewCell.highlighted = NO;
-            UIGraphicsBeginImageContextWithOptions(theCollectionViewCell.bounds.size, theCollectionViewCell.opaque, 0.0f);
+            UIGraphicsBeginImageContextWithOptions(theCollectionViewCell.bounds.size, NO, 0.0f);
             [theCollectionViewCell.layer renderInContext:UIGraphicsGetCurrentContext()];
             UIImage *theImage = UIGraphicsGetImageFromCurrentImageContext();
             UIGraphicsEndImageContext();
@@ -421,25 +421,6 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
     }
     
     return theLayoutAttributes;
-}
-
-- (CGSize)collectionViewContentSize {
-    CGSize theCollectionViewContentSize = [super collectionViewContentSize];
-    if (self.alwaysScroll) {
-        switch (self.scrollDirection) {
-            case UICollectionViewScrollDirectionVertical: {
-                if (theCollectionViewContentSize.height <= CGRectGetHeight(self.collectionView.bounds)) {
-                    theCollectionViewContentSize.height = CGRectGetHeight(self.collectionView.bounds) + 1.0f;
-                }
-            } break;
-            case UICollectionViewScrollDirectionHorizontal: {
-                if (theCollectionViewContentSize.width <= CGRectGetWidth(self.collectionView.bounds)) {
-                    theCollectionViewContentSize.width = CGRectGetWidth(self.collectionView.bounds) + 1.0f;
-                }
-            } break;
-        }
-    }
-    return theCollectionViewContentSize;
 }
 
 #pragma mark - UIGestureRecognizerDelegate methods

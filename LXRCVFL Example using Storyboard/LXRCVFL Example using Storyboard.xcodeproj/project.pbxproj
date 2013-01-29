@@ -298,7 +298,7 @@
 				GCC_PREFIX_HEADER = "LXRCVFL Example using Storyboard/LXRCVFL Example using Storyboard-Prefix.pch";
 				INFOPLIST_FILE = "LXRCVFL Example using Storyboard/LXRCVFL Example using Storyboard-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = 2;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -310,7 +310,7 @@
 				GCC_PREFIX_HEADER = "LXRCVFL Example using Storyboard/LXRCVFL Example using Storyboard-Prefix.pch";
 				INFOPLIST_FILE = "LXRCVFL Example using Storyboard/LXRCVFL Example using Storyboard-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = 2;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;

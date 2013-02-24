@@ -9,8 +9,6 @@
 
 @interface LXReorderableCollectionViewFlowLayout : UICollectionViewFlowLayout <UIGestureRecognizerDelegate>
 
-- (void)setUpGestureRecognizersOnCollectionView __attribute__((deprecated));
-
 @property (assign, nonatomic) CGFloat scrollingSpeed;
 @property (assign, nonatomic) UIEdgeInsets scrollingTriggerEdgeInsets;
 @property (readonly, nonatomic) UILongPressGestureRecognizer *longPressGestureRecognizer;
@@ -18,17 +16,23 @@
 
 @end
 
-@protocol LXReorderableCollectionViewDelegateFlowLayout <UICollectionViewDelegateFlowLayout>
+@protocol LXReorderableCollectionViewDatasource <NSObject>
 
-- (void)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)layout itemAtIndexPath:(NSIndexPath *)fromIndexPath willMoveToIndexPath:(NSIndexPath *)toIndexPath;
+- (void)collectionView:(UICollectionView *)collectionView itemAtIndexPath:(NSIndexPath *)fromIndexPath willMoveToIndexPath:(NSIndexPath *)toIndexPath;
 
 @optional
 
-- (BOOL)collectionView:(UICollectionView *)theCollectionView layout:(UICollectionViewLayout *)layout itemAtIndexPath:(NSIndexPath *)theFromIndexPath shouldMoveToIndexPath:(NSIndexPath *)theToIndexPath;
-- (BOOL)collectionView:(UICollectionView *)theCollectionView layout:(UICollectionViewLayout *)layout shouldBeginReorderingAtIndexPath:(NSIndexPath *)theIndexPath;
-- (void)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)layout willBeginReorderingAtIndexPath:(NSIndexPath *)indexPath;
-- (void)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)layout didBeginReorderingAtIndexPath:(NSIndexPath *)indexPath;
-- (void)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)layout willEndReorderingAtIndexPath:(NSIndexPath *)indexPath;
-- (void)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)layout didEndReorderingAtIndexPath:(NSIndexPath *)indexPath;
+- (BOOL)collectionView:(UICollectionView *)collectionView canMoveItemAtIndexPath:(NSIndexPath *)indexPath;
+- (BOOL)collectionView:(UICollectionView *)collectionView itemAtIndexPath:(NSIndexPath *)fromIndexPath canMoveToIndexPath:(NSIndexPath *)toIndexPath;
+
+@end
+
+@protocol LXReorderableCollectionViewDelegate <NSObject>
+@optional
+
+- (void)collectionView:(UICollectionView *)collectionView willBeginDraggingItemAtIndexPath:(NSIndexPath *)indexPath;
+- (void)collectionView:(UICollectionView *)collectionView didBeginDraggingItemAtIndexPath:(NSIndexPath *)indexPath;
+- (void)collectionView:(UICollectionView *)collectionView willEndDraggingItemAtIndexPath:(NSIndexPath *)indexPath;
+- (void)collectionView:(UICollectionView *)collectionView didEndDraggingItemAtIndexPath:(NSIndexPath *)indexPath;
 
 @end

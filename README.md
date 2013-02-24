@@ -35,6 +35,13 @@ Getting Started
 Changes
 ============
 
+### Feb 24 2013 (Luke Scott)
+
+- Removed setUpGestureRecognizersOnCollectionView
+- Removed layout from delegate methods (can be accessed from collectionView)
+- Renamed delegate methods and split between dataSource and delegate
+- Added dataSource and delegate examples to sample project
+
 ### Feb 23 2013 (Luke Scott)
 
 - Refactored everything to be more readable / maintainable

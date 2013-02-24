@@ -10,6 +10,12 @@
 #import "PlayingCard.h"
 #import "PlayingCardCell.h"
 
+// LX_LIMITED_MOVEMENT:
+// 0 = Any card can move anywhere
+// 1 = Only Spade/Club can move within same rank
+
+#define LX_LIMITED_MOVEMENT 0
+
 @implementation LXCollectionViewController
 @synthesize deck;
 
@@ -77,14 +83,71 @@
     return playingCardCell;
 }
 
-#pragma mark - LXReorderableCollectionViewDelegateFlowLayout methods
+#pragma mark - LXReorderableCollectionViewDataSource methods
 
-- (void)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)layout itemAtIndexPath:(NSIndexPath *)fromIndexPath willMoveToIndexPath:(NSIndexPath *)toIndexPath
+- (void)collectionView:(UICollectionView *)collectionView itemAtIndexPath:(NSIndexPath *)fromIndexPath willMoveToIndexPath:(NSIndexPath *)toIndexPath
 {
-    PlayingCard *cardFrom = [deck objectAtIndex:fromIndexPath.item];
+    PlayingCard *playingCard = [deck objectAtIndex:fromIndexPath.item];
 
     [deck removeObjectAtIndex:fromIndexPath.item];
-    [deck insertObject:cardFrom atIndex:toIndexPath.item];
+    [deck insertObject:playingCard atIndex:toIndexPath.item];
+}
+
+- (BOOL)collectionView:(UICollectionView *)collectionView canMoveItemAtIndexPath:(NSIndexPath *)indexPath
+{
+#if LX_LIMITED_MOVEMENT == 1
+    PlayingCard *playingCard = [deck objectAtIndex:indexPath.item];
+    
+    switch (playingCard.suit) {
+        case PlayingCardSuitSpade:
+        case PlayingCardSuitClub:
+            return YES;
+        default:
+            return NO;
+    }
+#else
+    return YES;
+#endif
+}
+
+- (BOOL)collectionView:(UICollectionView *)collectionView itemAtIndexPath:(NSIndexPath *)fromIndexPath canMoveToIndexPath:(NSIndexPath *)toIndexPath
+{
+#if LX_LIMITED_MOVEMENT == 1
+    PlayingCard *fromPlayingCard = [deck objectAtIndex:fromIndexPath.item];
+    PlayingCard *toPlayingCard = [deck objectAtIndex:toIndexPath.item];
+    
+    switch (toPlayingCard.suit) {
+        case PlayingCardSuitSpade:
+        case PlayingCardSuitClub:
+            return fromPlayingCard.rank == toPlayingCard.rank;
+        default:
+            return NO;
+    }
+#else
+    return YES;
+#endif
+}
+
+#pragma mark - LXReorderableCollectionViewDelegate methods
+
+- (void)collectionView:(UICollectionView *)collectionView willBeginDraggingItemAtIndexPath:(NSIndexPath *)indexPath
+{
+    NSLog(@"will begin drag");
+}
+
+- (void)collectionView:(UICollectionView *)collectionView didBeginDraggingItemAtIndexPath:(NSIndexPath *)indexPath
+{
+    NSLog(@"did begin drag");
+}
+
+- (void)collectionView:(UICollectionView *)collectionView willEndDraggingItemAtIndexPath:(NSIndexPath *)indexPath
+{
+     NSLog(@"will end drag");
+}
+
+- (void)collectionView:(UICollectionView *)collectionView didEndDraggingItemAtIndexPath:(NSIndexPath *)indexPath
+{
+     NSLog(@"did end drag");
 }
 
 @end

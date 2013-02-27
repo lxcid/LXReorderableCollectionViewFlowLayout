@@ -43,8 +43,8 @@
 		AB0E97EA161B4C3C005498A0 /* LXCollectionViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LXCollectionViewController.m; sourceTree = "<group>"; };
 		AB0E97EC161B525D005498A0 /* PlayingCard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlayingCard.h; sourceTree = "<group>"; };
 		AB0E97ED161B525D005498A0 /* PlayingCard.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PlayingCard.m; sourceTree = "<group>"; };
-		AB0E97F1161B52D4005498A0 /* LXReorderableCollectionViewFlowLayout.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LXReorderableCollectionViewFlowLayout.h; sourceTree = "<group>"; };
-		AB0E97F2161B52D4005498A0 /* LXReorderableCollectionViewFlowLayout.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LXReorderableCollectionViewFlowLayout.m; sourceTree = "<group>"; };
+		AB0E97F1161B52D4005498A0 /* LXReorderableCollectionViewFlowLayout.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LXReorderableCollectionViewFlowLayout.h; path = ../LXReorderableCollectionViewFlowLayout/LXReorderableCollectionViewFlowLayout.h; sourceTree = "<group>"; };
+		AB0E97F2161B52D4005498A0 /* LXReorderableCollectionViewFlowLayout.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = LXReorderableCollectionViewFlowLayout.m; path = ../LXReorderableCollectionViewFlowLayout/LXReorderableCollectionViewFlowLayout.m; sourceTree = "<group>"; };
 		AB0E97F4161B561F005498A0 /* PlayingCardCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlayingCardCell.h; sourceTree = "<group>"; };
 		AB0E97F5161B561F005498A0 /* PlayingCardCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PlayingCardCell.m; sourceTree = "<group>"; };
 		AB0E97F7161B5DC6005498A0 /* Content */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Content; path = ../Content; sourceTree = "<group>"; };
@@ -67,9 +67,9 @@
 		AB0E97B7161B4BEC005498A0 = {
 			isa = PBXGroup;
 			children = (
-				AB0E97F7161B5DC6005498A0 /* Content */,
-				AB0E97EF161B52C1005498A0 /* Vendors */,
 				AB0E97CC161B4BEC005498A0 /* LXRCVFL Example using Storyboard */,
+				AB0E97EF161B52C1005498A0 /* Library */,
+				AB0E97F7161B5DC6005498A0 /* Content */,
 				AB0E97C5161B4BEC005498A0 /* Frameworks */,
 				AB0E97C3161B4BEC005498A0 /* Products */,
 			);
@@ -96,16 +96,16 @@
 		AB0E97CC161B4BEC005498A0 /* LXRCVFL Example using Storyboard */ = {
 			isa = PBXGroup;
 			children = (
+				AB0E97DE161B4BEC005498A0 /* MainStoryboard.storyboard */,
 				AB0E97D5161B4BEC005498A0 /* AppDelegate.h */,
 				AB0E97D6161B4BEC005498A0 /* AppDelegate.m */,
-				AB0E97DE161B4BEC005498A0 /* MainStoryboard.storyboard */,
-				AB0E97CD161B4BEC005498A0 /* Supporting Files */,
 				AB0E97E9161B4C3C005498A0 /* LXCollectionViewController.h */,
 				AB0E97EA161B4C3C005498A0 /* LXCollectionViewController.m */,
 				AB0E97EC161B525D005498A0 /* PlayingCard.h */,
 				AB0E97ED161B525D005498A0 /* PlayingCard.m */,
 				AB0E97F4161B561F005498A0 /* PlayingCardCell.h */,
 				AB0E97F5161B561F005498A0 /* PlayingCardCell.m */,
+				AB0E97CD161B4BEC005498A0 /* Supporting Files */,
 			);
 			path = "LXRCVFL Example using Storyboard";
 			sourceTree = "<group>";
@@ -124,22 +124,13 @@
 			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
-		AB0E97EF161B52C1005498A0 /* Vendors */ = {
-			isa = PBXGroup;
-			children = (
-				AB0E97F0161B52D4005498A0 /* LXReorderableCollectionViewFlowLayout */,
-			);
-			name = Vendors;
-			sourceTree = "<group>";
-		};
-		AB0E97F0161B52D4005498A0 /* LXReorderableCollectionViewFlowLayout */ = {
+		AB0E97EF161B52C1005498A0 /* Library */ = {
 			isa = PBXGroup;
 			children = (
 				AB0E97F1161B52D4005498A0 /* LXReorderableCollectionViewFlowLayout.h */,
 				AB0E97F2161B52D4005498A0 /* LXReorderableCollectionViewFlowLayout.m */,
 			);
-			name = LXReorderableCollectionViewFlowLayout;
-			path = ../LXReorderableCollectionViewFlowLayout;
+			name = Library;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

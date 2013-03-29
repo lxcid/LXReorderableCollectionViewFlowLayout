@@ -12,8 +12,8 @@
 
 #ifndef CGGEOMETRY_LXSUPPORT_H_
 CG_INLINE CGPoint
-LXS_CGPointAdd(CGPoint thePoint1, CGPoint thePoint2) {
-    return CGPointMake(thePoint1.x + thePoint2.x, thePoint1.y + thePoint2.y);
+LXS_CGPointAdd(CGPoint point1, CGPoint point2) {
+    return CGPointMake(point1.x + point2.x, point1.y + point2.y);
 }
 #endif
 

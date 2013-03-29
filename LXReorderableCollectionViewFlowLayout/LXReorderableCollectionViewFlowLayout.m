@@ -18,7 +18,8 @@ LXS_CGPointAdd(CGPoint point1, CGPoint point2) {
 #endif
 
 typedef NS_ENUM(NSInteger, LXScrollingDirection) {
-    LXScrollingDirectionUp = 1,
+    LXScrollingDirectionUnknown = 0,
+    LXScrollingDirectionUp,
     LXScrollingDirectionDown,
     LXScrollingDirectionLeft,
     LXScrollingDirectionRight

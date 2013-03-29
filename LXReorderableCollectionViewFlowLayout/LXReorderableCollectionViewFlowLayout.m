@@ -30,18 +30,16 @@ static NSString * const kLXScrollingDirectionKey = @"LXScrollingDirection";
 
 @interface UICollectionViewCell (LXReorderableCollectionViewFlowLayout)
 
-- (UIImage *)lxRasterizedImage;
+- (UIImage *)LX_rasterizedImage;
 
 @end
 
 @implementation UICollectionViewCell (LXReorderableCollectionViewFlowLayout)
 
-- (UIImage *)lxRasterizedImage
-{
-    UIImage *image;
-    UIGraphicsBeginImageContextWithOptions(self.bounds.size, self.isOpaque, .0f);
+- (UIImage *)LX_rasterizedImage {
+    UIGraphicsBeginImageContextWithOptions(self.bounds.size, self.isOpaque, 0.0f);
     [self.layer renderInContext:UIGraphicsGetCurrentContext()];
-    image = UIGraphicsGetImageFromCurrentImageContext();
+    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
     return image;
 }
@@ -291,12 +289,12 @@ static NSString * const kLXScrollingDirectionKey = @"LXScrollingDirection";
                                                                    CGRectGetHeight(collectionViewCell.frame))];
             
             collectionViewCell.highlighted = YES;
-            highlightedImageView = [[UIImageView alloc] initWithImage:[collectionViewCell lxRasterizedImage]];
+            highlightedImageView = [[UIImageView alloc] initWithImage:[collectionViewCell LX_rasterizedImage]];
             highlightedImageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
             highlightedImageView.hidden = NO;
             
             collectionViewCell.highlighted = NO;
-            imageView = [[UIImageView alloc] initWithImage:[collectionViewCell lxRasterizedImage]];
+            imageView = [[UIImageView alloc] initWithImage:[collectionViewCell LX_rasterizedImage]];
             imageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
             imageView.hidden = YES;
             

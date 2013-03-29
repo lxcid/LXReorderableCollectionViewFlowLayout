@@ -62,9 +62,7 @@ README.md structure is heavily referenced from [AFNetworking](https://github.com
 
 ### Creators
 
-[Github: Stan Chang Khin Boon](http://github.com/lxcid)  
-[Twitter: @lxcid](https://twitter.com/lxcid)
-[Google+: +Stan Chang Khin Boon](https://plus.google.com/118232095174296729296?rel=author)
+- Stan Chang Khin Boon ([Github: @lxcid](http://github.com/lxcid), [Twitter: @lxcid](https://twitter.com/lxcid), [Google+: +Stan Chang Khin Boon](https://plus.google.com/118232095174296729296?rel=author))
 
 License
 =======

@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name = 'LXReorderableCollectionViewFlowLayout'
-  s.version = '0.0.1'
+  s.version = '0.0.2'
   s.summary = 'Extends UICollectionViewFlowLayout to support reordering of cells. Similar to long press and pan on books in iBook.'
   s.homepage = 'https://github.com/lxcid/LXReorderableCollectionViewFlowLayout'
   s.license = {

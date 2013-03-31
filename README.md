@@ -22,15 +22,16 @@ Getting Started
  1. Drag the `LXReorderableCollectionViewFlowLayout` folder into your project.
  2. Initialize/Setup your collection view to use `LXReorderableCollectionViewFlowLayout`.
 
- 3. The collection view controller that is to support reordering capability must conforms to `LXReorderableCollectionViewDelegateFlowLayout` protocol. For example,
+ 3. The collection view controller that is to support reordering capability must conforms to `LXReorderableCollectionViewDatasource` protocol. For example,
 
-        - (void)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)layout itemAtIndexPath:(NSIndexPath *)fromIndexPath willMoveToIndexPath:(NSIndexPath *)toIndexPath {
+        - (void)collectionView:(UICollectionView *)collectionView itemAtIndexPath:(NSIndexPath *)fromIndexPath willMoveToIndexPath:(NSIndexPath *)toIndexPath {
             id object = [mutableArray objectAtIndex:fromIndexPath.item];
             [mutableArray removeObjectAtIndex:FromIndexPath.item];
             [mutableArray insertObject:object atIndex:ToIndexPath.item];
         }
 
- 4. Setup your collection view accordingly to your need, run and see it in action! :D
+ 4. You can listen to some dragging events through comforming to `LXReorderableCollectionViewDelegateFlowLayout` methods.
+ 5. Setup your collection view accordingly to your need, run and see it in action! :D
 
 Changes
 ============
@@ -51,7 +52,7 @@ Requirements
 ============
 
  - ARC
- - iOS 6
+ - iOS 6 and above preferred
  - Xcode 4.5 and above
 
 Credits

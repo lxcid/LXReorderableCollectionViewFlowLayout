@@ -78,7 +78,7 @@
     return playingCardCell;
 }
 
-#pragma mark - LXReorderableCollectionViewDataSource methods
+#pragma mark - LXReorderableCollectionViewDatasource methods
 
 - (void)collectionView:(UICollectionView *)collectionView itemAtIndexPath:(NSIndexPath *)fromIndexPath willMoveToIndexPath:(NSIndexPath *)toIndexPath {
     PlayingCard *playingCard = [self.deck objectAtIndex:fromIndexPath.item];
@@ -120,21 +120,21 @@
 #endif
 }
 
-#pragma mark - LXReorderableCollectionViewDelegate methods
+#pragma mark - LXReorderableCollectionViewDelegateFlowLayout methods
 
-- (void)collectionView:(UICollectionView *)collectionView willBeginDraggingItemAtIndexPath:(NSIndexPath *)indexPath {
+- (void)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout willBeginDraggingItemAtIndexPath:(NSIndexPath *)indexPath {
     NSLog(@"will begin drag");
 }
 
-- (void)collectionView:(UICollectionView *)collectionView didBeginDraggingItemAtIndexPath:(NSIndexPath *)indexPath {
+- (void)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout didBeginDraggingItemAtIndexPath:(NSIndexPath *)indexPath {
     NSLog(@"did begin drag");
 }
 
-- (void)collectionView:(UICollectionView *)collectionView willEndDraggingItemAtIndexPath:(NSIndexPath *)indexPath {
+- (void)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout willEndDraggingItemAtIndexPath:(NSIndexPath *)indexPath {
      NSLog(@"will end drag");
 }
 
-- (void)collectionView:(UICollectionView *)collectionView didEndDraggingItemAtIndexPath:(NSIndexPath *)indexPath {
+- (void)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout didEndDraggingItemAtIndexPath:(NSIndexPath *)indexPath {
      NSLog(@"did end drag");
 }
 

@@ -17,17 +17,14 @@
 #define LX_LIMITED_MOVEMENT 0
 
 @implementation LXCollectionViewController
-@synthesize deck;
 
-- (void)awakeFromNib
-{
-    [super awakeFromNib];
+- (void)viewDidLoad {
+    [super viewDidLoad];
     
-    deck = [self constructsDeck];
+    self.deck = [self constructsDeck];
 }
 
-- (NSMutableArray *)constructsDeck
-{
+- (NSMutableArray *)constructsDeck {
     NSMutableArray *newDeck = [NSMutableArray arrayWithCapacity:52];
     
     for (NSInteger rank = 1; rank <= 13; rank++) {
@@ -69,14 +66,12 @@
 
 #pragma mark - UICollectionViewDataSource methods
 
-- (NSInteger)collectionView:(UICollectionView *)theCollectionView numberOfItemsInSection:(NSInteger)theSectionIndex
-{
-    return deck.count;
+- (NSInteger)collectionView:(UICollectionView *)theCollectionView numberOfItemsInSection:(NSInteger)theSectionIndex {
+    return self.deck.count;
 }
 
-- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
-{
-    PlayingCard *playingCard = [deck objectAtIndex:indexPath.item];
+- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
+    PlayingCard *playingCard = [self.deck objectAtIndex:indexPath.item];
     PlayingCardCell *playingCardCell = [collectionView dequeueReusableCellWithReuseIdentifier:@"PlayingCardCell" forIndexPath:indexPath];
     playingCardCell.playingCard = playingCard;
     
@@ -85,16 +80,14 @@
 
 #pragma mark - LXReorderableCollectionViewDataSource methods
 
-- (void)collectionView:(UICollectionView *)collectionView itemAtIndexPath:(NSIndexPath *)fromIndexPath willMoveToIndexPath:(NSIndexPath *)toIndexPath
-{
-    PlayingCard *playingCard = [deck objectAtIndex:fromIndexPath.item];
+- (void)collectionView:(UICollectionView *)collectionView itemAtIndexPath:(NSIndexPath *)fromIndexPath willMoveToIndexPath:(NSIndexPath *)toIndexPath {
+    PlayingCard *playingCard = [self.deck objectAtIndex:fromIndexPath.item];
 
-    [deck removeObjectAtIndex:fromIndexPath.item];
-    [deck insertObject:playingCard atIndex:toIndexPath.item];
+    [self.deck removeObjectAtIndex:fromIndexPath.item];
+    [self.deck insertObject:playingCard atIndex:toIndexPath.item];
 }
 
-- (BOOL)collectionView:(UICollectionView *)collectionView canMoveItemAtIndexPath:(NSIndexPath *)indexPath
-{
+- (BOOL)collectionView:(UICollectionView *)collectionView canMoveItemAtIndexPath:(NSIndexPath *)indexPath {
 #if LX_LIMITED_MOVEMENT == 1
     PlayingCard *playingCard = [deck objectAtIndex:indexPath.item];
     
@@ -110,8 +103,7 @@
 #endif
 }
 
-- (BOOL)collectionView:(UICollectionView *)collectionView itemAtIndexPath:(NSIndexPath *)fromIndexPath canMoveToIndexPath:(NSIndexPath *)toIndexPath
-{
+- (BOOL)collectionView:(UICollectionView *)collectionView itemAtIndexPath:(NSIndexPath *)fromIndexPath canMoveToIndexPath:(NSIndexPath *)toIndexPath {
 #if LX_LIMITED_MOVEMENT == 1
     PlayingCard *fromPlayingCard = [deck objectAtIndex:fromIndexPath.item];
     PlayingCard *toPlayingCard = [deck objectAtIndex:toIndexPath.item];
@@ -130,23 +122,19 @@
 
 #pragma mark - LXReorderableCollectionViewDelegate methods
 
-- (void)collectionView:(UICollectionView *)collectionView willBeginDraggingItemAtIndexPath:(NSIndexPath *)indexPath
-{
+- (void)collectionView:(UICollectionView *)collectionView willBeginDraggingItemAtIndexPath:(NSIndexPath *)indexPath {
     NSLog(@"will begin drag");
 }
 
-- (void)collectionView:(UICollectionView *)collectionView didBeginDraggingItemAtIndexPath:(NSIndexPath *)indexPath
-{
+- (void)collectionView:(UICollectionView *)collectionView didBeginDraggingItemAtIndexPath:(NSIndexPath *)indexPath {
     NSLog(@"did begin drag");
 }
 
-- (void)collectionView:(UICollectionView *)collectionView willEndDraggingItemAtIndexPath:(NSIndexPath *)indexPath
-{
+- (void)collectionView:(UICollectionView *)collectionView willEndDraggingItemAtIndexPath:(NSIndexPath *)indexPath {
      NSLog(@"will end drag");
 }
 
-- (void)collectionView:(UICollectionView *)collectionView didEndDraggingItemAtIndexPath:(NSIndexPath *)indexPath
-{
+- (void)collectionView:(UICollectionView *)collectionView didEndDraggingItemAtIndexPath:(NSIndexPath *)indexPath {
      NSLog(@"did end drag");
 }
 

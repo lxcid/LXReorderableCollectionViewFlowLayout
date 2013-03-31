@@ -67,23 +67,25 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 }
 
 - (void)setupCollectionView {
-    _longPressGestureRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self
-                                                                                action:@selector(handleLongPressGesture:)];
-    _longPressGestureRecognizer.delegate = self;
-    [self.collectionView addGestureRecognizer:_longPressGestureRecognizer];
+    UILongPressGestureRecognizer *longPressGestureRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self
+                                                                                                             action:@selector(handleLongPressGesture:)];
+    longPressGestureRecognizer.delegate = self;
+    [self.collectionView addGestureRecognizer:longPressGestureRecognizer];
     
     // Links the default long press gesture recognizer to the custom long press gesture recognizer we are creating now
     // by enforcing failure dependency so that they doesn't clash.
     for (UIGestureRecognizer *gestureRecognizer in self.collectionView.gestureRecognizers) {
         if ([gestureRecognizer isKindOfClass:[UILongPressGestureRecognizer class]]) {
-            [gestureRecognizer requireGestureRecognizerToFail:_longPressGestureRecognizer];
+            [gestureRecognizer requireGestureRecognizerToFail:longPressGestureRecognizer];
         }
     }
+    _longPressGestureRecognizer = longPressGestureRecognizer;
     
-    _panGestureRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self
-                                                                    action:@selector(handlePanGesture:)];
-    _panGestureRecognizer.delegate = self;
-    [self.collectionView addGestureRecognizer:_panGestureRecognizer];
+    UIPanGestureRecognizer *panGestureRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self
+                                                                                           action:@selector(handlePanGesture:)];
+    panGestureRecognizer.delegate = self;
+    [self.collectionView addGestureRecognizer:panGestureRecognizer];
+    _panGestureRecognizer = panGestureRecognizer;
 }
 
 - (id)init {

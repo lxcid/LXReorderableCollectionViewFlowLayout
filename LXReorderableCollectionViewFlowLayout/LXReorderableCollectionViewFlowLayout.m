@@ -254,8 +254,8 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
             
             self.selectedItemIndexPath = currentIndexPath;
             
-            if ([self.delegate respondsToSelector:@selector(collectionView:willBeginDraggingItemAtIndexPath:)]) {
-                [self.delegate collectionView:self.collectionView willBeginDraggingItemAtIndexPath:self.selectedItemIndexPath];
+            if ([self.delegate respondsToSelector:@selector(collectionView:layout:willBeginDraggingItemAtIndexPath:)]) {
+                [self.delegate collectionView:self.collectionView layout:self willBeginDraggingItemAtIndexPath:self.selectedItemIndexPath];
             }
             
             UICollectionViewCell *collectionViewCell = [self.collectionView cellForItemAtIndexPath:self.selectedItemIndexPath];
@@ -296,8 +296,8 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
                  if (strongSelf) {
                      [highlightedImageView removeFromSuperview];
                      
-                     if ([strongSelf.delegate respondsToSelector:@selector(collectionView:didBeginDraggingItemAtIndexPath:)]) {
-                         [strongSelf.delegate collectionView:strongSelf.collectionView didBeginDraggingItemAtIndexPath:strongSelf.selectedItemIndexPath];
+                     if ([strongSelf.delegate respondsToSelector:@selector(collectionView:layout:didBeginDraggingItemAtIndexPath:)]) {
+                         [strongSelf.delegate collectionView:strongSelf.collectionView layout:strongSelf didBeginDraggingItemAtIndexPath:strongSelf.selectedItemIndexPath];
                      }
                  }
              }];
@@ -308,8 +308,8 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
             NSIndexPath *currentIndexPath = self.selectedItemIndexPath;
             
             if (currentIndexPath) {
-                if ([self.delegate respondsToSelector:@selector(collectionView:willEndDraggingItemAtIndexPath:)]) {
-                    [self.delegate collectionView:self.collectionView willEndDraggingItemAtIndexPath:currentIndexPath];
+                if ([self.delegate respondsToSelector:@selector(collectionView:layout:willEndDraggingItemAtIndexPath:)]) {
+                    [self.delegate collectionView:self.collectionView layout:self willEndDraggingItemAtIndexPath:currentIndexPath];
                 }
                 
                 self.selectedItemIndexPath = nil;
@@ -336,8 +336,8 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
                          strongSelf.currentView = nil;
                          [strongSelf invalidateLayout];
                          
-                         if ([strongSelf.delegate respondsToSelector:@selector(collectionView:didEndDraggingItemAtIndexPath:)]) {
-                             [strongSelf.delegate collectionView:strongSelf.collectionView didEndDraggingItemAtIndexPath:currentIndexPath];
+                         if ([strongSelf.delegate respondsToSelector:@selector(collectionView:layout:didEndDraggingItemAtIndexPath:)]) {
+                             [strongSelf.delegate collectionView:strongSelf.collectionView layout:strongSelf didEndDraggingItemAtIndexPath:currentIndexPath];
                          }
                      }
                  }];

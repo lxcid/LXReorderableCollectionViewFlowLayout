@@ -142,9 +142,13 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
     
     [self.dataSource collectionView:self.collectionView itemAtIndexPath:previousIndexPath willMoveToIndexPath:newIndexPath];
     
+    __weak typeof(self) weakSelf = self;
     [self.collectionView performBatchUpdates:^{
-        [self.collectionView deleteItemsAtIndexPaths:@[ previousIndexPath ]];
-        [self.collectionView insertItemsAtIndexPaths:@[ newIndexPath ]];
+        __strong typeof(self) strongSelf = weakSelf;
+        if (strongSelf) {
+            [strongSelf.collectionView deleteItemsAtIndexPaths:@[ previousIndexPath ]];
+            [strongSelf.collectionView insertItemsAtIndexPaths:@[ newIndexPath ]];
+        }
     } completion:nil];
 }
 
@@ -274,20 +278,27 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
             
             self.currentViewCenter = self.currentView.center;
             
+            __weak typeof(self) weakSelf = self;
             [UIView
              animateWithDuration:0.3
              delay:0.0
              options:UIViewAnimationOptionBeginFromCurrentState
              animations:^{
-                 self.currentView.transform = CGAffineTransformMakeScale(1.1f, 1.1f);
-                 highlightedImageView.alpha = 0.0f;
-                 imageView.alpha = 1.0f;
+                 __strong typeof(self) strongSelf = weakSelf;
+                 if (strongSelf) {
+                     strongSelf.currentView.transform = CGAffineTransformMakeScale(1.1f, 1.1f);
+                     highlightedImageView.alpha = 0.0f;
+                     imageView.alpha = 1.0f;
+                 }
              }
              completion:^(BOOL finished) {
-                 [highlightedImageView removeFromSuperview];
-                 
-                 if ([self.delegate respondsToSelector:@selector(collectionView:didBeginDraggingItemAtIndexPath:)]) {
-                     [self.delegate collectionView:self.collectionView didBeginDraggingItemAtIndexPath:self.selectedItemIndexPath];
+                 __strong typeof(self) strongSelf = weakSelf;
+                 if (strongSelf) {
+                     [highlightedImageView removeFromSuperview];
+                     
+                     if ([strongSelf.delegate respondsToSelector:@selector(collectionView:didBeginDraggingItemAtIndexPath:)]) {
+                         [strongSelf.delegate collectionView:strongSelf.collectionView didBeginDraggingItemAtIndexPath:strongSelf.selectedItemIndexPath];
+                     }
                  }
              }];
             
@@ -306,21 +317,28 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
                 
                 UICollectionViewLayoutAttributes *layoutAttributes = [self layoutAttributesForItemAtIndexPath:currentIndexPath];
                 
+                __weak typeof(self) weakSelf = self;
                 [UIView
                  animateWithDuration:0.3
                  delay:0.0
                  options:UIViewAnimationOptionBeginFromCurrentState
                  animations:^{
-                     self.currentView.transform = CGAffineTransformMakeScale(1.0f, 1.0f);
-                     self.currentView.center = layoutAttributes.center;
+                     __strong typeof(self) strongSelf = weakSelf;
+                     if (strongSelf) {
+                         strongSelf.currentView.transform = CGAffineTransformMakeScale(1.0f, 1.0f);
+                         strongSelf.currentView.center = layoutAttributes.center;
+                     }
                  }
                  completion:^(BOOL finished) {
-                     [self.currentView removeFromSuperview];
-                     self.currentView = nil;
-                     [self invalidateLayout];
-                     
-                     if ([self.delegate respondsToSelector:@selector(collectionView:didEndDraggingItemAtIndexPath:)]) {
-                         [self.delegate collectionView:self.collectionView didEndDraggingItemAtIndexPath:currentIndexPath];
+                     __strong typeof(self) strongSelf = weakSelf;
+                     if (strongSelf) {
+                         [strongSelf.currentView removeFromSuperview];
+                         strongSelf.currentView = nil;
+                         [strongSelf invalidateLayout];
+                         
+                         if ([strongSelf.delegate respondsToSelector:@selector(collectionView:didEndDraggingItemAtIndexPath:)]) {
+                             [strongSelf.delegate collectionView:strongSelf.collectionView didEndDraggingItemAtIndexPath:currentIndexPath];
+                         }
                      }
                  }];
             }

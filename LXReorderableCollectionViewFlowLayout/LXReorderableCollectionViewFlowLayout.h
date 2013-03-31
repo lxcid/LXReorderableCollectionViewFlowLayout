@@ -17,6 +17,7 @@
 @property (weak, nonatomic) UIPanGestureRecognizer *panGestureRecognizer;
 
 @property (strong, nonatomic) NSIndexPath *selectedItemIndexPath;
+@property (strong, nonatomic) NSIndexPath *originalIndexPath;;
 @property (weak, nonatomic) UIView *currentView;
 @property (assign, nonatomic) CGPoint currentViewCenter;
 @property (assign, nonatomic) CGPoint panTranslationInCollectionView;

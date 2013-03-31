@@ -27,9 +27,6 @@ typedef NS_ENUM(NSInteger, LXReorderableCollectionViewFlowLayoutScrollingDirecti
 static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirectionKey = @"LXScrollingDirection";
 
 @implementation LXReorderableCollectionViewFlowLayout
-{
-    NSIndexPath *originalIndexPath;
-}
 
 - (void)setUpGestureRecognizersOnCollectionView {
     UILongPressGestureRecognizer *theLongPressGestureRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleLongPressGesture:)];
@@ -81,7 +78,7 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
                 BOOL shouldMove = [theDelegate collectionView:self.collectionView
                                                        layout:self
                                               itemAtIndexPath:theIndexPathOfSelectedItem
-                                        shouldMoveToIndexPath:originalIndexPath];
+                                        shouldMoveToIndexPath:self.originalIndexPath];
                 
                 if (!shouldMove) {
                     return;
@@ -94,13 +91,13 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
             [theDelegate collectionView:self.collectionView
                                  layout:self
                         itemAtIndexPath:theIndexPathOfSelectedItem
-                    willMoveToIndexPath:originalIndexPath];
+                    willMoveToIndexPath:self.originalIndexPath];
             
         }
         
         [self.collectionView performBatchUpdates:^{
-            [self.collectionView moveItemAtIndexPath:theIndexPathOfSelectedItem toIndexPath:originalIndexPath];
-            [self.collectionView moveItemAtIndexPath:originalIndexPath toIndexPath:theIndexPathOfSelectedItem];
+            [self.collectionView moveItemAtIndexPath:theIndexPathOfSelectedItem toIndexPath:self.originalIndexPath];
+            [self.collectionView moveItemAtIndexPath:self.originalIndexPath toIndexPath:theIndexPathOfSelectedItem];
         } completion:^(BOOL finished) {
         }];
     }
@@ -210,7 +207,7 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
             [self.collectionView addSubview:theView];
             
             self.selectedItemIndexPath = theIndexPathOfSelectedItem;
-            originalIndexPath = theIndexPathOfSelectedItem;
+            self.originalIndexPath = theIndexPathOfSelectedItem;
             self.currentView = theView;
             self.currentViewCenter = theView.center;
             
@@ -271,7 +268,7 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
                      if ([self.collectionView.delegate conformsToProtocol:@protocol(LXReorderableCollectionViewDelegateFlowLayout)]) {
                          id<LXReorderableCollectionViewDelegateFlowLayout> theDelegate = (id<LXReorderableCollectionViewDelegateFlowLayout>)self.collectionView.delegate;
                          if ([theDelegate respondsToSelector:@selector(collectionView:layout:didEndReorderingAtIndexPath:fromIndexPath:)]) {
-                             [theDelegate collectionView:self.collectionView layout:self didEndReorderingAtIndexPath:theIndexPathOfSelectedItem fromIndexPath:originalIndexPath];
+                             [theDelegate collectionView:self.collectionView layout:self didEndReorderingAtIndexPath:theIndexPathOfSelectedItem fromIndexPath:self.originalIndexPath];
                          }
                      }
                  }];

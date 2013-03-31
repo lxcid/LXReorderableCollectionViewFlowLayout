@@ -27,6 +27,9 @@ typedef NS_ENUM(NSInteger, LXReorderableCollectionViewFlowLayoutScrollingDirecti
 static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirectionKey = @"LXScrollingDirection";
 
 @implementation LXReorderableCollectionViewFlowLayout
+{
+    NSIndexPath *originalIndexPath;
+}
 
 - (void)setUpGestureRecognizersOnCollectionView {
     UILongPressGestureRecognizer *theLongPressGestureRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleLongPressGesture:)];
@@ -66,8 +69,8 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
 
 - (void)invalidateLayoutIfNecessary {
     NSIndexPath *theIndexPathOfSelectedItem = [self.collectionView indexPathForItemAtPoint:self.currentView.center];
-    if ((![theIndexPathOfSelectedItem isEqual:self.selectedItemIndexPath]) &&(theIndexPathOfSelectedItem)) {
-        NSIndexPath *thePreviousSelectedIndexPath = self.selectedItemIndexPath;
+    if ((![theIndexPathOfSelectedItem isEqual:self.selectedItemIndexPath]) && (theIndexPathOfSelectedItem)) {
+        //NSIndexPath *thePreviousSelectedIndexPath = self.selectedItemIndexPath;
         
         id<LXReorderableCollectionViewDelegateFlowLayout> theDelegate = (id<LXReorderableCollectionViewDelegateFlowLayout>) self.collectionView.delegate;
         
@@ -77,8 +80,8 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
             if ([theDelegate respondsToSelector:@selector(collectionView:layout:itemAtIndexPath:shouldMoveToIndexPath:)]) {
                 BOOL shouldMove = [theDelegate collectionView:self.collectionView
                                                        layout:self
-                                              itemAtIndexPath:thePreviousSelectedIndexPath
-                                        shouldMoveToIndexPath:theIndexPathOfSelectedItem];
+                                              itemAtIndexPath:theIndexPathOfSelectedItem
+                                        shouldMoveToIndexPath:originalIndexPath];
                 
                 if (!shouldMove) {
                     return;
@@ -90,14 +93,14 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
             // Proceed with the move
             [theDelegate collectionView:self.collectionView
                                  layout:self
-                        itemAtIndexPath:thePreviousSelectedIndexPath
-                    willMoveToIndexPath:theIndexPathOfSelectedItem];
+                        itemAtIndexPath:theIndexPathOfSelectedItem
+                    willMoveToIndexPath:originalIndexPath];
+            
         }
         
         [self.collectionView performBatchUpdates:^{
-            //[self.collectionView moveItemAtIndexPath:thePreviousSelectedIndexPath toIndexPath:theIndexPathOfSelectedItem];
-            [self.collectionView deleteItemsAtIndexPaths:@[ thePreviousSelectedIndexPath ]];
-            [self.collectionView insertItemsAtIndexPaths:@[ theIndexPathOfSelectedItem ]];
+            [self.collectionView moveItemAtIndexPath:theIndexPathOfSelectedItem toIndexPath:originalIndexPath];
+            [self.collectionView moveItemAtIndexPath:originalIndexPath toIndexPath:theIndexPathOfSelectedItem];
         } completion:^(BOOL finished) {
         }];
     }
@@ -207,6 +210,7 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
             [self.collectionView addSubview:theView];
             
             self.selectedItemIndexPath = theIndexPathOfSelectedItem;
+            originalIndexPath = theIndexPathOfSelectedItem;
             self.currentView = theView;
             self.currentViewCenter = theView.center;
             
@@ -264,11 +268,10 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
                      [theStrongSelf.currentView removeFromSuperview];
                      [theStrongSelf invalidateLayout];
                      
-                     // Use theStrongSelf in case self has been deallocated before the completion block gets called.
-                     if ([theStrongSelf.collectionView.delegate conformsToProtocol:@protocol(LXReorderableCollectionViewDelegateFlowLayout)]) {
-                         id<LXReorderableCollectionViewDelegateFlowLayout> theDelegate = (id<LXReorderableCollectionViewDelegateFlowLayout>)theStrongSelf.collectionView.delegate;
-                         if ([theDelegate respondsToSelector:@selector(collectionView:layout:didEndReorderingAtIndexPath:)]) {
-                             [theDelegate collectionView:theStrongSelf.collectionView layout:theStrongSelf didEndReorderingAtIndexPath:theIndexPathOfSelectedItem];
+                     if ([self.collectionView.delegate conformsToProtocol:@protocol(LXReorderableCollectionViewDelegateFlowLayout)]) {
+                         id<LXReorderableCollectionViewDelegateFlowLayout> theDelegate = (id<LXReorderableCollectionViewDelegateFlowLayout>)self.collectionView.delegate;
+                         if ([theDelegate respondsToSelector:@selector(collectionView:layout:didEndReorderingAtIndexPath:fromIndexPath:)]) {
+                             [theDelegate collectionView:self.collectionView layout:self didEndReorderingAtIndexPath:theIndexPathOfSelectedItem fromIndexPath:originalIndexPath];
                          }
                      }
                  }];

@@ -10,26 +10,18 @@
 #import "PlayingCard.h"
 
 @implementation PlayingCardCell
+@synthesize playingCard;
 
-- (id)initWithFrame:(CGRect)frame
+- (void)setPlayingCard:(PlayingCard *)thePlayingCard
 {
-    self = [super initWithFrame:frame];
-    if (self) {
-        // Initialization code
-    }
-    return self;
+    playingCard = thePlayingCard;
+    self.playingCardImageView.image = [UIImage imageNamed:playingCard.imageName];
 }
 
-- (void)setPlayingCard:(PlayingCard *)thePlayingCard {
-    _playingCard = thePlayingCard;
-    
-    self.playingCardImageView.image = [UIImage imageNamed:self.playingCard.imageName];
-}
-
-- (void)setHighlighted:(BOOL)theHighlighted {
-    [super setHighlighted:theHighlighted];
-    
-    self.playingCardImageView.alpha = theHighlighted ? 0.75f : 1.0f;
+- (void)setHighlighted:(BOOL)highlighted
+{
+    [super setHighlighted:highlighted];
+    self.playingCardImageView.alpha = highlighted ? 0.75f : 1.0f;
 }
 
 @end

@@ -391,7 +391,7 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
     }
 }
 
-#pragma mark - UICollectionViewFlowLayoutDelegate methods
+#pragma mark - UICollectionViewLayout overridden methods
 
 - (NSArray *)layoutAttributesForElementsInRect:(CGRect)rect {
     NSArray *layoutAttributesForElementsInRect = [super layoutAttributesForElementsInRect:rect];

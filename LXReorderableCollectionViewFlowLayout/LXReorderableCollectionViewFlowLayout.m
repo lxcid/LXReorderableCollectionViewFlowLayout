@@ -55,7 +55,7 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 @property (strong, nonatomic) NSTimer *scrollingTimer;
 
 @property (assign, nonatomic, readonly) id<LXReorderableCollectionViewDatasource> dataSource;
-@property (assign, nonatomic, readonly) id<LXReorderableCollectionViewDelegate> delegate;
+@property (assign, nonatomic, readonly) id<LXReorderableCollectionViewDelegateFlowLayout> delegate;
 
 @end
 
@@ -121,8 +121,8 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
     return (id<LXReorderableCollectionViewDatasource>)self.collectionView.dataSource;
 }
 
-- (id<LXReorderableCollectionViewDelegate>)delegate {
-    return (id<LXReorderableCollectionViewDelegate>)self.collectionView.delegate;
+- (id<LXReorderableCollectionViewDelegateFlowLayout>)delegate {
+    return (id<LXReorderableCollectionViewDelegateFlowLayout>)self.collectionView.delegate;
 }
 
 - (void)invalidateLayoutIfNecessary {

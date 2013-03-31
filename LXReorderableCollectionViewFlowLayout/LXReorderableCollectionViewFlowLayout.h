@@ -18,7 +18,7 @@
 
 @end
 
-@protocol LXReorderableCollectionViewDatasource <NSObject>
+@protocol LXReorderableCollectionViewDatasource <UICollectionViewDataSource>
 
 - (void)collectionView:(UICollectionView *)collectionView itemAtIndexPath:(NSIndexPath *)fromIndexPath willMoveToIndexPath:(NSIndexPath *)toIndexPath;
 
@@ -29,7 +29,7 @@
 
 @end
 
-@protocol LXReorderableCollectionViewDelegate <NSObject>
+@protocol LXReorderableCollectionViewDelegateFlowLayout <UICollectionViewDelegateFlowLayout>
 @optional
 
 - (void)collectionView:(UICollectionView *)collectionView willBeginDraggingItemAtIndexPath:(NSIndexPath *)indexPath;

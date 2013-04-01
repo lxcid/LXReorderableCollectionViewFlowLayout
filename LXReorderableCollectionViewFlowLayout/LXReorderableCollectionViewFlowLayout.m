@@ -257,8 +257,10 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 - (void)scrollToPageIndex:(NSInteger)pageIndex forward:(BOOL)forward {
     const CGPoint offset = [self LX_contentOffsetForPageIndex:pageIndex];
     [self.collectionView setContentOffset:offset animated:YES];
-    _pageScrollingDisabled = YES;
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+    
+    // Wait a little bit before changing page again
+    _pageScrollingDisabled = YES; 
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{ // Delay must be bigger than the contentOffset animation
         _pageScrollingDisabled = NO;
         [self scrollIfNecessary];
     });

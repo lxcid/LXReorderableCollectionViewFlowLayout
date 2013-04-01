@@ -11,8 +11,8 @@
 
 @property (assign, nonatomic) CGFloat scrollingSpeed;
 @property (assign, nonatomic) UIEdgeInsets scrollingTriggerEdgeInsets;
-@property (weak, nonatomic, readonly) UILongPressGestureRecognizer *longPressGestureRecognizer;
-@property (weak, nonatomic, readonly) UIPanGestureRecognizer *panGestureRecognizer;
+@property (strong, nonatomic, readonly) UILongPressGestureRecognizer *longPressGestureRecognizer;
+@property (strong, nonatomic, readonly) UIPanGestureRecognizer *panGestureRecognizer;
 
 - (void)setUpGestureRecognizersOnCollectionView __attribute__((deprecated("Calls to setUpGestureRecognizersOnCollectionView method are not longer needed as setup are done automatically through KVO.")));
 

@@ -18,7 +18,7 @@
 
 @end
 
-@protocol LXReorderableCollectionViewDatasource <UICollectionViewDataSource>
+@protocol LXReorderableCollectionViewDataSource <UICollectionViewDataSource>
 
 - (void)collectionView:(UICollectionView *)collectionView itemAtIndexPath:(NSIndexPath *)fromIndexPath willMoveToIndexPath:(NSIndexPath *)toIndexPath;
 

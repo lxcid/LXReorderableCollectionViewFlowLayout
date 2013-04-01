@@ -78,7 +78,7 @@
     return playingCardCell;
 }
 
-#pragma mark - LXReorderableCollectionViewDatasource methods
+#pragma mark - LXReorderableCollectionViewDataSource methods
 
 - (void)collectionView:(UICollectionView *)collectionView itemAtIndexPath:(NSIndexPath *)fromIndexPath willMoveToIndexPath:(NSIndexPath *)toIndexPath {
     PlayingCard *playingCard = [self.deck objectAtIndex:fromIndexPath.item];

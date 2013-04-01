@@ -126,7 +126,8 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 }
 
 - (void)invalidateLayoutIfNecessary {
-    NSIndexPath *newIndexPath = [self.collectionView indexPathForItemAtPoint:self.currentView.center];
+    const CGPoint point = [self.collectionView convertPoint:self.currentView.center fromView:self.collectionView.superview];
+    NSIndexPath *newIndexPath = [self.collectionView indexPathForItemAtPoint:point];
     NSIndexPath *previousIndexPath = self.selectedItemIndexPath;
     
     if ((newIndexPath == nil) || [newIndexPath isEqual:previousIndexPath]) {
@@ -236,7 +237,6 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
         } break;
     }
     
-    self.currentViewCenter = LXS_CGPointAdd(self.currentViewCenter, translation);
     self.currentView.center = LXS_CGPointAdd(self.currentViewCenter, self.panTranslationInCollectionView);
     self.collectionView.contentOffset = LXS_CGPointAdd(contentOffset, translation);
 }
@@ -274,7 +274,9 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
             
             [self.currentView addSubview:imageView];
             [self.currentView addSubview:highlightedImageView];
-            [self.collectionView addSubview:self.currentView];
+            const CGPoint center = [self.collectionView.superview convertPoint:collectionViewCell.center fromView:self.collectionView];
+            self.currentView.center = center;
+            [self.collectionView.superview addSubview:self.currentView];
             
             self.currentViewCenter = self.currentView.center;
             
@@ -326,7 +328,8 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
                      __strong typeof(self) strongSelf = weakSelf;
                      if (strongSelf) {
                          strongSelf.currentView.transform = CGAffineTransformMakeScale(1.0f, 1.0f);
-                         strongSelf.currentView.center = layoutAttributes.center;
+                         const CGPoint center = [strongSelf.collectionView.superview convertPoint:layoutAttributes.center fromView:strongSelf.collectionView];
+                         strongSelf.currentView.center = center;
                      }
                  }
                  completion:^(BOOL finished) {
@@ -352,8 +355,9 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
     switch (gestureRecognizer.state) {
         case UIGestureRecognizerStateBegan:
         case UIGestureRecognizerStateChanged: {
-            self.panTranslationInCollectionView = [gestureRecognizer translationInView:self.collectionView];
-            CGPoint viewCenter = self.currentView.center = LXS_CGPointAdd(self.currentViewCenter, self.panTranslationInCollectionView);
+            self.panTranslationInCollectionView = [gestureRecognizer translationInView:self.collectionView.superview];
+            self.currentView.center = LXS_CGPointAdd(self.currentViewCenter, self.panTranslationInCollectionView);
+            const CGPoint viewCenter = [self.collectionView convertPoint:self.currentView.center fromView:self.collectionView.superview];
             
             [self invalidateLayoutIfNecessary];
             

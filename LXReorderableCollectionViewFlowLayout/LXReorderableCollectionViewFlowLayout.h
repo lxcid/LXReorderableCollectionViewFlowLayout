@@ -11,14 +11,14 @@
 
 @property (assign, nonatomic) CGFloat scrollingSpeed;
 @property (assign, nonatomic) UIEdgeInsets scrollingTriggerEdgeInsets;
-@property (weak, nonatomic, readonly) UILongPressGestureRecognizer *longPressGestureRecognizer;
-@property (weak, nonatomic, readonly) UIPanGestureRecognizer *panGestureRecognizer;
+@property (strong, nonatomic, readonly) UILongPressGestureRecognizer *longPressGestureRecognizer;
+@property (strong, nonatomic, readonly) UIPanGestureRecognizer *panGestureRecognizer;
 
 - (void)setUpGestureRecognizersOnCollectionView __attribute__((deprecated("Calls to setUpGestureRecognizersOnCollectionView method are not longer needed as setup are done automatically through KVO.")));
 
 @end
 
-@protocol LXReorderableCollectionViewDatasource <UICollectionViewDataSource>
+@protocol LXReorderableCollectionViewDataSource <UICollectionViewDataSource>
 
 - (void)collectionView:(UICollectionView *)collectionView itemAtIndexPath:(NSIndexPath *)fromIndexPath willMoveToIndexPath:(NSIndexPath *)toIndexPath;
 

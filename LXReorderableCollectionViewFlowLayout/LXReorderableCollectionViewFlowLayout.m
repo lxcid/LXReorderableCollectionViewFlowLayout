@@ -28,6 +28,51 @@ typedef NS_ENUM(NSInteger, LXScrollingDirection) {
 static NSString * const kLXScrollingDirectionKey = @"LXScrollingDirection";
 static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 
+@interface UICollectionViewFlowLayout (LXPaging)
+
+- (CGPoint)LX_contentOffsetForPageIndex:(NSInteger)pageIndex;
+- (NSInteger)LX_currentPageIndex;
+- (NSInteger)LX_pageCount;
+
+@end
+
+@implementation UICollectionViewFlowLayout (LXPaging)
+
+- (NSInteger)LX_currentPageIndex {
+    switch (self.scrollDirection) {
+        case UICollectionViewScrollDirectionHorizontal: {
+            return round(self.collectionView.contentOffset.x / self.collectionView.frame.size.width);
+        }
+        case UICollectionViewScrollDirectionVertical: {
+            return round(self.collectionView.contentOffset.y / self.collectionView.frame.size.height);
+        }
+    }
+}
+
+- (NSInteger)LX_pageCount {
+    switch (self.scrollDirection) {
+        case UICollectionViewScrollDirectionHorizontal: {
+            return ceil(self.collectionViewContentSize.width / self.collectionView.frame.size.width);
+        }
+        case UICollectionViewScrollDirectionVertical: {
+            return ceil(self.collectionViewContentSize.height / self.collectionView.frame.size.height);
+        }
+    }
+}
+
+- (CGPoint)LX_contentOffsetForPageIndex:(NSInteger)pageIndex {
+    switch (self.scrollDirection) {
+        case UICollectionViewScrollDirectionHorizontal: {
+            return CGPointMake(self.collectionView.frame.size.width * pageIndex, 0);
+        }
+        case UICollectionViewScrollDirectionVertical: {
+            return CGPointMake(0, self.collectionView.frame.size.height * pageIndex);
+        }
+    }
+}
+
+@end
+
 @interface UICollectionViewCell (LXReorderableCollectionViewFlowLayout)
 
 - (UIImage *)LX_rasterizedImage;
@@ -59,7 +104,9 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 
 @end
 
-@implementation LXReorderableCollectionViewFlowLayout
+@implementation LXReorderableCollectionViewFlowLayout {
+    BOOL _pageScrollingDisabled;
+}
 
 - (void)setDefaults {
     _scrollingSpeed = 300.0f;
@@ -158,6 +205,81 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
         [self.scrollingTimer invalidate];
     }
     self.scrollingTimer = nil;
+}
+
+- (void)scrollIfNecessary {
+    const CGPoint viewCenter = [self.collectionView convertPoint:self.currentView.center fromView:self.collectionView.superview];
+    switch (self.scrollDirection) {
+        case UICollectionViewScrollDirectionVertical: {
+            if (viewCenter.y < (CGRectGetMinY(self.collectionView.bounds) + self.scrollingTriggerEdgeInsets.top)) {
+                [self scrollWithDirection:LXScrollingDirectionUp];
+            } else {
+                if (viewCenter.y > (CGRectGetMaxY(self.collectionView.bounds) - self.scrollingTriggerEdgeInsets.bottom)) {
+                    [self scrollWithDirection:LXScrollingDirectionDown];
+                } else {
+                    [self invalidatesScrollTimer];
+                }
+            }
+        } break;
+        case UICollectionViewScrollDirectionHorizontal: {
+            if (viewCenter.x < (CGRectGetMinX(self.collectionView.bounds) + self.scrollingTriggerEdgeInsets.left)) {
+                [self scrollWithDirection:LXScrollingDirectionLeft];
+            } else {
+                if (viewCenter.x > (CGRectGetMaxX(self.collectionView.bounds) - self.scrollingTriggerEdgeInsets.right)) {
+                    [self scrollWithDirection:LXScrollingDirectionRight];
+                } else {
+                    [self invalidatesScrollTimer];
+                }
+            }
+        } break;
+    }
+}
+
+- (void)scrollToPreviousPage {
+    if (_pageScrollingDisabled) return;
+    const NSInteger currentPage = [self LX_currentPageIndex];
+    if (currentPage <= 0) return;
+    const NSInteger newPage = currentPage - 1;
+    [self scrollToPageIndex:newPage forward:NO];
+}
+
+- (void)scrollToNextPage {
+    if (_pageScrollingDisabled) return;
+    const NSInteger currentPage = [self LX_currentPageIndex];
+    const NSInteger pageCount = [self LX_pageCount];
+    if (currentPage >= pageCount - 1) return;
+    const NSInteger newPage = currentPage + 1;
+    [self scrollToPageIndex:newPage forward:YES];
+}
+
+- (void)scrollToPageIndex:(NSInteger)pageIndex forward:(BOOL)forward {
+    const CGPoint offset = [self LX_contentOffsetForPageIndex:pageIndex];
+    [self.collectionView setContentOffset:offset animated:YES];
+    _pageScrollingDisabled = YES;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+        _pageScrollingDisabled = NO;
+        [self scrollIfNecessary];
+    });
+}
+
+- (void)scrollWithDirection:(LXScrollingDirection)direction {
+    if (self.collectionView.pagingEnabled) {
+        switch(direction) {
+            case LXScrollingDirectionUp:
+            case LXScrollingDirectionLeft: {
+                [self scrollToPreviousPage];
+            } break;
+            case LXScrollingDirectionDown:
+            case LXScrollingDirectionRight: {
+                [self scrollToNextPage];
+            } break;
+            default: {
+                // Do nothing...
+            } break;
+        }
+    } else {
+        [self setupScrollTimerInDirection:direction];
+    }
 }
 
 - (void)setupScrollTimerInDirection:(LXScrollingDirection)direction {
@@ -356,41 +478,13 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
         case UIGestureRecognizerStateBegan:
         case UIGestureRecognizerStateChanged: {
             self.panTranslationInCollectionView = [gestureRecognizer translationInView:self.collectionView.superview];
-            self.currentView.center = LXS_CGPointAdd(self.currentViewCenter, self.panTranslationInCollectionView);
-            const CGPoint viewCenter = [self.collectionView convertPoint:self.currentView.center fromView:self.collectionView.superview];
-            
+            self.currentView.center = LXS_CGPointAdd(self.currentViewCenter, self.panTranslationInCollectionView);            
             [self invalidateLayoutIfNecessary];
-            
-            switch (self.scrollDirection) {
-                case UICollectionViewScrollDirectionVertical: {
-                    if (viewCenter.y < (CGRectGetMinY(self.collectionView.bounds) + self.scrollingTriggerEdgeInsets.top)) {
-                        [self setupScrollTimerInDirection:LXScrollingDirectionUp];
-                    } else {
-                        if (viewCenter.y > (CGRectGetMaxY(self.collectionView.bounds) - self.scrollingTriggerEdgeInsets.bottom)) {
-                            [self setupScrollTimerInDirection:LXScrollingDirectionDown];
-                        } else {
-                            [self invalidatesScrollTimer];
-                        }
-                    }
-                } break;
-                case UICollectionViewScrollDirectionHorizontal: {
-                    if (viewCenter.x < (CGRectGetMinX(self.collectionView.bounds) + self.scrollingTriggerEdgeInsets.left)) {
-                        [self setupScrollTimerInDirection:LXScrollingDirectionLeft];
-                    } else {
-                        if (viewCenter.x > (CGRectGetMaxX(self.collectionView.bounds) - self.scrollingTriggerEdgeInsets.right)) {
-                            [self setupScrollTimerInDirection:LXScrollingDirectionRight];
-                        } else {
-                            [self invalidatesScrollTimer];
-                        }
-                    }
-                } break;
-            }
+            [self scrollIfNecessary];
         } break;
-        case UIGestureRecognizerStateEnded: {
-            [self invalidatesScrollTimer];
-        } break;
+        case UIGestureRecognizerStateEnded:
         default: {
-            // Do nothing...
+            [self invalidatesScrollTimer];
         } break;
     }
 }

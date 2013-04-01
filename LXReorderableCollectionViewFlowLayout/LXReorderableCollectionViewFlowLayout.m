@@ -208,6 +208,8 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 }
 
 - (void)scrollIfNecessary {
+    if (!self.currentView) return; // Prevent scrollToPageIndex to continue scrolling after the drag ended
+    
     const CGPoint viewCenter = [self.collectionView convertPoint:self.currentView.center fromView:self.collectionView.superview];
     switch (self.scrollDirection) {
         case UICollectionViewScrollDirectionVertical: {

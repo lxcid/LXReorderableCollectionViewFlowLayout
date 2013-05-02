@@ -65,4 +65,4 @@ Credits
 License
 =======
 
-LXReorderableCollectionViewFlowLayout is available under the MIT license.
+LXReorderableCollectionViewFlowLayout is available under [the MIT license](blob/master/LICENSE).

@@ -62,6 +62,11 @@ Credits
 - Refactored by [Luke Scott](https://github.com/lukescott), with some help from [mulle-nat's fork](https://github.com/mulle-nat/LXReorderableCollectionViewFlowLayout).
 - Playing cards in the demo are downloaded from [http://www.jfitz.com/cards/](http://www.jfitz.com/cards/).
 
+Alternatives
+============
+
+- [DraggableCollectionView](https://github.com/lukescott/DraggableCollectionView) by [Luke Scott](https://github.com/lukescott).
+
 License
 =======
 

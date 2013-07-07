@@ -7,6 +7,7 @@
 
 #import "LXReorderableCollectionViewFlowLayout.h"
 #import <QuartzCore/QuartzCore.h>
+#import <objc/runtime.h>
 
 #define LX_FRAMES_PER_SECOND 60.0
 
@@ -27,6 +28,20 @@ typedef NS_ENUM(NSInteger, LXScrollingDirection) {
 
 static NSString * const kLXScrollingDirectionKey = @"LXScrollingDirection";
 static NSString * const kLXCollectionViewKeyPath = @"collectionView";
+
+@interface CADisplayLink (LX_userInfo)
+@property (nonatomic, copy) NSDictionary *LX_userInfo;
+@end
+
+@implementation CADisplayLink (LX_userInfo)
+- (void) setLX_userInfo:(NSDictionary *) LX_userInfo {
+    objc_setAssociatedObject(self, "LX_userInfo", LX_userInfo, OBJC_ASSOCIATION_COPY);
+}
+
+- (NSDictionary *) LX_userInfo {
+    return objc_getAssociatedObject(self, "LX_userInfo");
+}
+@end
 
 @interface UICollectionViewCell (LXReorderableCollectionViewFlowLayout)
 
@@ -52,7 +67,7 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 @property (strong, nonatomic) UIView *currentView;
 @property (assign, nonatomic) CGPoint currentViewCenter;
 @property (assign, nonatomic) CGPoint panTranslationInCollectionView;
-@property (strong, nonatomic) NSTimer *scrollingTimer;
+@property (strong, nonatomic) CADisplayLink *displayLink;
 
 @property (assign, nonatomic, readonly) id<LXReorderableCollectionViewDataSource> dataSource;
 @property (assign, nonatomic, readonly) id<LXReorderableCollectionViewDelegateFlowLayout> delegate;
@@ -139,8 +154,10 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
     
     self.selectedItemIndexPath = newIndexPath;
     
-    [self.dataSource collectionView:self.collectionView itemAtIndexPath:previousIndexPath willMoveToIndexPath:newIndexPath];
-    
+    if ([self.dataSource respondsToSelector:@selector(collectionView:itemAtIndexPath:willMoveToIndexPath:)]) {
+        [self.dataSource collectionView:self.collectionView itemAtIndexPath:previousIndexPath willMoveToIndexPath:newIndexPath];
+    }
+
     __weak typeof(self) weakSelf = self;
     [self.collectionView performBatchUpdates:^{
         __strong typeof(self) strongSelf = weakSelf;
@@ -148,39 +165,43 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
             [strongSelf.collectionView deleteItemsAtIndexPaths:@[ previousIndexPath ]];
             [strongSelf.collectionView insertItemsAtIndexPaths:@[ newIndexPath ]];
         }
-    } completion:nil];
+    } completion:^(BOOL finished) {
+        __strong typeof(self) strongSelf = weakSelf;
+        if ([strongSelf.dataSource respondsToSelector:@selector(collectionView:itemAtIndexPath:didMoveToIndexPath:)]) {
+            [strongSelf.dataSource collectionView:strongSelf.collectionView itemAtIndexPath:previousIndexPath didMoveToIndexPath:newIndexPath];
+        }
+    }];
 }
 
 - (void)invalidatesScrollTimer {
-    if (self.scrollingTimer.isValid) {
-        [self.scrollingTimer invalidate];
+    if (!self.displayLink.paused) {
+        [self.displayLink invalidate];
     }
-    self.scrollingTimer = nil;
+    self.displayLink = nil;
 }
 
 - (void)setupScrollTimerInDirection:(LXScrollingDirection)direction {
-    if (self.scrollingTimer.isValid) {
-        LXScrollingDirection oldDirection = [self.scrollingTimer.userInfo[kLXScrollingDirectionKey] integerValue];
-        
+    if (!self.displayLink.paused) {
+        LXScrollingDirection oldDirection = [self.displayLink.LX_userInfo[kLXScrollingDirectionKey] integerValue];
+
         if (direction == oldDirection) {
             return;
         }
     }
     
     [self invalidatesScrollTimer];
-    
-    self.scrollingTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 / LX_FRAMES_PER_SECOND
-                                                           target:self
-                                                         selector:@selector(handleScroll:)
-                                                         userInfo:@{ kLXScrollingDirectionKey : @(direction) }
-                                                          repeats:YES];
+
+    self.displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(handleScroll:)];
+    self.displayLink.LX_userInfo = @{ kLXScrollingDirectionKey : @(direction) };
+
+    [self.displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
 }
 
 #pragma mark - Target/Action methods
 
 // Tight loop, allocate memory sparely, even if they are stack allocation.
-- (void)handleScroll:(NSTimer *)timer {
-    LXScrollingDirection direction = (LXScrollingDirection)[timer.userInfo[kLXScrollingDirectionKey] integerValue];
+- (void)handleScroll:(CADisplayLink *)displayLink {
+    LXScrollingDirection direction = (LXScrollingDirection)[displayLink.LX_userInfo[kLXScrollingDirectionKey] integerValue];
     if (direction == LXScrollingDirectionUnknown) {
         return;
     }

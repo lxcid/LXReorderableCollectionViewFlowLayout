@@ -100,6 +100,9 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
                                                                     action:@selector(handlePanGesture:)];
     _panGestureRecognizer.delegate = self;
     [self.collectionView addGestureRecognizer:_panGestureRecognizer];
+
+    // Useful in multiple scenarios: one common scenario being when the Notification Center drawer is pulled down
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleApplicationWillResignActive:) name: UIApplicationWillResignActiveNotification object:nil];
 }
 
 - (id)init {
@@ -324,6 +327,7 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
             
             [self invalidateLayout];
         } break;
+        case UIGestureRecognizerStateCancelled:
         case UIGestureRecognizerStateEnded: {
             NSIndexPath *currentIndexPath = self.selectedItemIndexPath;
             
@@ -402,6 +406,7 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
                 } break;
             }
         } break;
+        case UIGestureRecognizerStateCancelled:
         case UIGestureRecognizerStateEnded: {
             [self invalidatesScrollTimer];
         } break;
@@ -476,6 +481,13 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
             [self invalidatesScrollTimer];
         }
     }
+}
+
+#pragma mark - Notifications
+
+- (void)handleApplicationWillResignActive:(NSNotification *)notification {
+    self.panGestureRecognizer.enabled = NO;
+    self.panGestureRecognizer.enabled = YES;
 }
 
 #pragma mark - Depreciated methods

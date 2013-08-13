@@ -126,6 +126,7 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 - (void)dealloc {
     [self invalidatesScrollTimer];
     [self removeObserver:self forKeyPath:kLXCollectionViewKeyPath];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationWillResignActiveNotification object:nil];
 }
 
 - (void)applyLayoutAttributes:(UICollectionViewLayoutAttributes *)layoutAttributes {

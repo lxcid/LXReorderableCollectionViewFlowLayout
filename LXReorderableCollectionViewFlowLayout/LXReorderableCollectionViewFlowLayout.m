@@ -271,62 +271,64 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
         case UIGestureRecognizerStateBegan: {
             NSIndexPath *currentIndexPath = [self.collectionView indexPathForItemAtPoint:[gestureRecognizer locationInView:self.collectionView]];
             
-            if ([self.dataSource respondsToSelector:@selector(collectionView:canMoveItemAtIndexPath:)] &&
-               ![self.dataSource collectionView:self.collectionView canMoveItemAtIndexPath:currentIndexPath]) {
-                return;
-            }
-            
-            self.selectedItemIndexPath = currentIndexPath;
-            
-            if ([self.delegate respondsToSelector:@selector(collectionView:layout:willBeginDraggingItemAtIndexPath:)]) {
-                [self.delegate collectionView:self.collectionView layout:self willBeginDraggingItemAtIndexPath:self.selectedItemIndexPath];
-            }
-            
-            UICollectionViewCell *collectionViewCell = [self.collectionView cellForItemAtIndexPath:self.selectedItemIndexPath];
-            
-            self.currentView = [[UIView alloc] initWithFrame:collectionViewCell.frame];
-            
-            collectionViewCell.highlighted = YES;
-            UIImageView *highlightedImageView = [[UIImageView alloc] initWithImage:[collectionViewCell LX_rasterizedImage]];
-            highlightedImageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-            highlightedImageView.alpha = 1.0f;
-            
-            collectionViewCell.highlighted = NO;
-            UIImageView *imageView = [[UIImageView alloc] initWithImage:[collectionViewCell LX_rasterizedImage]];
-            imageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-            imageView.alpha = 0.0f;
-            
-            [self.currentView addSubview:imageView];
-            [self.currentView addSubview:highlightedImageView];
-            [self.collectionView addSubview:self.currentView];
-            
-            self.currentViewCenter = self.currentView.center;
-            
-            __weak typeof(self) weakSelf = self;
-            [UIView
-             animateWithDuration:0.3
-             delay:0.0
-             options:UIViewAnimationOptionBeginFromCurrentState
-             animations:^{
-                 __strong typeof(self) strongSelf = weakSelf;
-                 if (strongSelf) {
-                     strongSelf.currentView.transform = CGAffineTransformMakeScale(1.1f, 1.1f);
-                     highlightedImageView.alpha = 0.0f;
-                     imageView.alpha = 1.0f;
-                 }
-             }
-             completion:^(BOOL finished) {
-                 __strong typeof(self) strongSelf = weakSelf;
-                 if (strongSelf) {
-                     [highlightedImageView removeFromSuperview];
-                     
-                     if ([strongSelf.delegate respondsToSelector:@selector(collectionView:layout:didBeginDraggingItemAtIndexPath:)]) {
-                         [strongSelf.delegate collectionView:strongSelf.collectionView layout:strongSelf didBeginDraggingItemAtIndexPath:strongSelf.selectedItemIndexPath];
+            if (currentIndexPath) {
+                if ([self.dataSource respondsToSelector:@selector(collectionView:canMoveItemAtIndexPath:)] &&
+                    ![self.dataSource collectionView:self.collectionView canMoveItemAtIndexPath:currentIndexPath]) {
+                    return;
+                }
+                
+                self.selectedItemIndexPath = currentIndexPath;
+                
+                if ([self.delegate respondsToSelector:@selector(collectionView:layout:willBeginDraggingItemAtIndexPath:)]) {
+                    [self.delegate collectionView:self.collectionView layout:self willBeginDraggingItemAtIndexPath:self.selectedItemIndexPath];
+                }
+                
+                UICollectionViewCell *collectionViewCell = [self.collectionView cellForItemAtIndexPath:self.selectedItemIndexPath];
+                
+                self.currentView = [[UIView alloc] initWithFrame:collectionViewCell.frame];
+                
+                collectionViewCell.highlighted = YES;
+                UIImageView *highlightedImageView = [[UIImageView alloc] initWithImage:[collectionViewCell LX_rasterizedImage]];
+                highlightedImageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+                highlightedImageView.alpha = 1.0f;
+                
+                collectionViewCell.highlighted = NO;
+                UIImageView *imageView = [[UIImageView alloc] initWithImage:[collectionViewCell LX_rasterizedImage]];
+                imageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+                imageView.alpha = 0.0f;
+                
+                [self.currentView addSubview:imageView];
+                [self.currentView addSubview:highlightedImageView];
+                [self.collectionView addSubview:self.currentView];
+                
+                self.currentViewCenter = self.currentView.center;
+                
+                __weak typeof(self) weakSelf = self;
+                [UIView
+                 animateWithDuration:0.3
+                 delay:0.0
+                 options:UIViewAnimationOptionBeginFromCurrentState
+                 animations:^{
+                     __strong typeof(self) strongSelf = weakSelf;
+                     if (strongSelf) {
+                         strongSelf.currentView.transform = CGAffineTransformMakeScale(1.1f, 1.1f);
+                         highlightedImageView.alpha = 0.0f;
+                         imageView.alpha = 1.0f;
                      }
                  }
-             }];
-            
-            [self invalidateLayout];
+                 completion:^(BOOL finished) {
+                     __strong typeof(self) strongSelf = weakSelf;
+                     if (strongSelf) {
+                         [highlightedImageView removeFromSuperview];
+                         
+                         if ([strongSelf.delegate respondsToSelector:@selector(collectionView:layout:didBeginDraggingItemAtIndexPath:)]) {
+                             [strongSelf.delegate collectionView:strongSelf.collectionView layout:strongSelf didBeginDraggingItemAtIndexPath:strongSelf.selectedItemIndexPath];
+                         }
+                     }
+                 }];
+                
+                [self invalidateLayout];
+            }
         } break;
         case UIGestureRecognizerStateCancelled:
         case UIGestureRecognizerStateEnded: {

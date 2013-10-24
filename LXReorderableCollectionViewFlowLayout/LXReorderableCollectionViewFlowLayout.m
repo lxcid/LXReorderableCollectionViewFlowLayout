@@ -52,10 +52,12 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 @implementation UICollectionViewCell (LXReorderableCollectionViewFlowLayout)
 
 - (UIImage *)LX_rasterizedImage {
-    UIGraphicsBeginImageContextWithOptions(self.bounds.size, self.isOpaque, 0.0f);
+    self.layer.masksToBounds = NO;
+    UIGraphicsBeginImageContextWithOptions(self.bounds.size, /*self.isOpaque*/ NO, 0.0f);
     [self.layer renderInContext:UIGraphicsGetCurrentContext()];
     UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
+    self.layer.masksToBounds = YES;
     return image;
 }
 
@@ -64,7 +66,8 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 @interface LXReorderableCollectionViewFlowLayout ()
 
 @property (strong, nonatomic) NSIndexPath *selectedItemIndexPath;
-@property (strong, nonatomic) UIView *currentView;
+@property (strong, nonatomic) NSIndexPath *catchItemIndexPath;
+@property (strong, nonatomic) UIImageView *currentView;
 @property (assign, nonatomic) CGPoint currentViewCenter;
 @property (assign, nonatomic) CGPoint panTranslationInCollectionView;
 @property (strong, nonatomic) CADisplayLink *displayLink;
@@ -143,38 +146,90 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
     return (id<LXReorderableCollectionViewDelegateFlowLayout>)self.collectionView.delegate;
 }
 
-- (void)invalidateLayoutIfNecessary {
-    NSIndexPath *newIndexPath = [self.collectionView indexPathForItemAtPoint:self.currentView.center];
+- (void)resetCatchItemIfNeeded {
+    if (self.catchItemIndexPath) {
+        [self.collectionView deselectItemAtIndexPath:self.catchItemIndexPath animated:YES];
+        self.catchItemIndexPath = nil;
+    }
+}
+
+- (void)moveCurrentItemToIndexPath:(NSIndexPath *)newIndexPath {
+    [self resetCatchItemIfNeeded];
+    
     NSIndexPath *previousIndexPath = self.selectedItemIndexPath;
     
     if ((newIndexPath == nil) || [newIndexPath isEqual:previousIndexPath]) {
         return;
     }
     
-    if ([self.dataSource respondsToSelector:@selector(collectionView:itemAtIndexPath:canMoveToIndexPath:)] &&
-        ![self.dataSource collectionView:self.collectionView itemAtIndexPath:previousIndexPath canMoveToIndexPath:newIndexPath]) {
+    if ([self.dataSource respondsToSelector:@selector(collectionView:canMoveItemAtIndexPath:toIndexPath:)] &&
+        ![self.dataSource collectionView:self.collectionView canMoveItemAtIndexPath:previousIndexPath toIndexPath:newIndexPath]) {
         return;
     }
     
     self.selectedItemIndexPath = newIndexPath;
     
-    if ([self.dataSource respondsToSelector:@selector(collectionView:itemAtIndexPath:willMoveToIndexPath:)]) {
-        [self.dataSource collectionView:self.collectionView itemAtIndexPath:previousIndexPath willMoveToIndexPath:newIndexPath];
+    if ([self.dataSource respondsToSelector:@selector(collectionView:willMoveItemAtIndexPath:toIndexPath:)]) {
+        [self.dataSource collectionView:self.collectionView willMoveItemAtIndexPath:previousIndexPath toIndexPath:newIndexPath];
     }
-
-    __weak typeof(self) weakSelf = self;
+    
+    __weak typeof(self)weakSelf = self;
     [self.collectionView performBatchUpdates:^{
-        __strong typeof(self) strongSelf = weakSelf;
-        if (strongSelf) {
-            [strongSelf.collectionView deleteItemsAtIndexPaths:@[ previousIndexPath ]];
-            [strongSelf.collectionView insertItemsAtIndexPaths:@[ newIndexPath ]];
+        __strong typeof(weakSelf)strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
         }
+        
+        if ([strongSelf.dataSource respondsToSelector:@selector(collectionView:moveItemAtIndexPath:toIndexPath:)]) {
+            [strongSelf.dataSource collectionView:strongSelf.collectionView moveItemAtIndexPath:previousIndexPath toIndexPath:newIndexPath];
+        }
+        
+        [strongSelf.collectionView deleteItemsAtIndexPaths:@[ previousIndexPath ]];
+        [strongSelf.collectionView insertItemsAtIndexPaths:@[ newIndexPath ]];
     } completion:^(BOOL finished) {
-        __strong typeof(self) strongSelf = weakSelf;
-        if ([strongSelf.dataSource respondsToSelector:@selector(collectionView:itemAtIndexPath:didMoveToIndexPath:)]) {
-            [strongSelf.dataSource collectionView:strongSelf.collectionView itemAtIndexPath:previousIndexPath didMoveToIndexPath:newIndexPath];
+        __strong typeof(weakSelf)strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+
+        if ([strongSelf.dataSource respondsToSelector:@selector(collectionView:didMoveItemAtIndexPath:toIndexPath:)]) {
+            [strongSelf.dataSource collectionView:strongSelf.collectionView didMoveItemAtIndexPath:previousIndexPath toIndexPath:newIndexPath];
         }
     }];
+}
+
+- (void)dropCurrentItemOnIndexPath:(NSIndexPath *)newIndexPath {
+    if ((newIndexPath == nil) || [newIndexPath isEqual:self.selectedItemIndexPath] || [newIndexPath isEqual:self.catchItemIndexPath]) {
+        [self resetCatchItemIfNeeded];
+        return;
+    }
+    
+    if (![self.dataSource respondsToSelector:@selector(collectionView:canDropItemAtIndexPath:toIndexPath:)]) {
+        [self moveCurrentItemToIndexPath:newIndexPath];
+        return;
+    }
+
+    if ([self.dataSource collectionView:self.collectionView canDropItemAtIndexPath:self.selectedItemIndexPath toIndexPath:newIndexPath]) {
+        self.catchItemIndexPath = newIndexPath;
+        [self.collectionView selectItemAtIndexPath:newIndexPath animated:YES scrollPosition:UICollectionViewScrollPositionNone];
+    } else {
+        [self moveCurrentItemToIndexPath:newIndexPath];
+    }
+}
+
+- (void)invalidateLayoutIfNecessary {
+    CGPoint theCurrentViewCenter = self.currentView.center;
+    NSIndexPath *newIndePath = [self.collectionView indexPathForItemAtPoint:theCurrentViewCenter];
+    
+    UICollectionViewLayoutAttributes *theLayoutAttributesOfSelectedItem = [self layoutAttributesForItemAtIndexPath:newIndePath];
+    CGRect theFrame = theLayoutAttributesOfSelectedItem.frame;
+    CGRect intersectionFrame = CGRectIntersection(self.currentView.frame, theFrame);
+    
+    if (intersectionFrame.size.height > theFrame.size.height/2 || intersectionFrame.size.width > theFrame.size.width/2) {
+        [self dropCurrentItemOnIndexPath:newIndePath];
+    } else {
+        [self moveCurrentItemToIndexPath:newIndePath];
+    }
 }
 
 - (void)invalidatesScrollTimer {
@@ -271,6 +326,10 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
         case UIGestureRecognizerStateBegan: {
             NSIndexPath *currentIndexPath = [self.collectionView indexPathForItemAtPoint:[gestureRecognizer locationInView:self.collectionView]];
             
+            if (!currentIndexPath) {
+                return ;
+            }
+            
             if ([self.dataSource respondsToSelector:@selector(collectionView:canMoveItemAtIndexPath:)] &&
                ![self.dataSource collectionView:self.collectionView canMoveItemAtIndexPath:currentIndexPath]) {
                 return;
@@ -284,89 +343,134 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
             
             UICollectionViewCell *collectionViewCell = [self.collectionView cellForItemAtIndexPath:self.selectedItemIndexPath];
             
-            self.currentView = [[UIView alloc] initWithFrame:collectionViewCell.frame];
+            self.currentView = [[UIImageView alloc] initWithFrame:collectionViewCell.frame];
             
             collectionViewCell.highlighted = YES;
-            UIImageView *highlightedImageView = [[UIImageView alloc] initWithImage:[collectionViewCell LX_rasterizedImage]];
-            highlightedImageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-            highlightedImageView.alpha = 1.0f;
+            self.currentView.highlightedImage = [collectionViewCell LX_rasterizedImage];
             
             collectionViewCell.highlighted = NO;
-            UIImageView *imageView = [[UIImageView alloc] initWithImage:[collectionViewCell LX_rasterizedImage]];
-            imageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-            imageView.alpha = 0.0f;
+            self.currentView.image = [collectionViewCell LX_rasterizedImage];
             
-            [self.currentView addSubview:imageView];
-            [self.currentView addSubview:highlightedImageView];
+            self.currentView.highlighted = YES;
             [self.collectionView addSubview:self.currentView];
             
             self.currentViewCenter = self.currentView.center;
             
-            __weak typeof(self) weakSelf = self;
-            [UIView
-             animateWithDuration:0.3
-             delay:0.0
-             options:UIViewAnimationOptionBeginFromCurrentState
-             animations:^{
-                 __strong typeof(self) strongSelf = weakSelf;
-                 if (strongSelf) {
-                     strongSelf.currentView.transform = CGAffineTransformMakeScale(1.1f, 1.1f);
-                     highlightedImageView.alpha = 0.0f;
-                     imageView.alpha = 1.0f;
-                 }
-             }
-             completion:^(BOOL finished) {
-                 __strong typeof(self) strongSelf = weakSelf;
-                 if (strongSelf) {
-                     [highlightedImageView removeFromSuperview];
-                     
-                     if ([strongSelf.delegate respondsToSelector:@selector(collectionView:layout:didBeginDraggingItemAtIndexPath:)]) {
-                         [strongSelf.delegate collectionView:strongSelf.collectionView layout:strongSelf didBeginDraggingItemAtIndexPath:strongSelf.selectedItemIndexPath];
-                     }
-                 }
-             }];
+            __weak typeof(self)weakSelf = self;
+            [UIView animateWithDuration:0.3
+                                  delay:0.0
+                                options:UIViewAnimationOptionBeginFromCurrentState
+                             animations:^{
+                                 __strong typeof(weakSelf)strongSelf = weakSelf;
+                                 if (!strongSelf) {
+                                     return;
+                                 }
+                                 
+                                 strongSelf.currentView.transform = CGAffineTransformMakeScale(1.05f, 1.05f);
+                                 strongSelf.currentView.highlighted = NO;
+                             }
+                             completion:^(BOOL finished) {
+                                 __strong typeof(weakSelf)strongSelf = weakSelf;
+                                 if (!strongSelf) {
+                                     return;
+                                 }
+                                 
+                                 if ([strongSelf.delegate respondsToSelector:@selector(collectionView:layout:didBeginDraggingItemAtIndexPath:)]) {
+                                     [strongSelf.delegate collectionView:strongSelf.collectionView layout:strongSelf didBeginDraggingItemAtIndexPath:strongSelf.selectedItemIndexPath];
+                                 }
+                             }];
             
             [self invalidateLayout];
         } break;
         case UIGestureRecognizerStateCancelled:
         case UIGestureRecognizerStateEnded: {
-            NSIndexPath *currentIndexPath = self.selectedItemIndexPath;
+            NSIndexPath *previousIndexPath = self.selectedItemIndexPath;
+            NSIndexPath *newIndexPath = self.catchItemIndexPath;
             
-            if (currentIndexPath) {
-                if ([self.delegate respondsToSelector:@selector(collectionView:layout:willEndDraggingItemAtIndexPath:)]) {
-                    [self.delegate collectionView:self.collectionView layout:self willEndDraggingItemAtIndexPath:currentIndexPath];
+            if (!previousIndexPath) {
+                [self resetCatchItemIfNeeded];
+                return ;
+            }
+            
+            if ([self.delegate respondsToSelector:@selector(collectionView:layout:willEndDraggingItemAtIndexPath:)]) {
+                [self.delegate collectionView:self.collectionView layout:self willEndDraggingItemAtIndexPath:previousIndexPath];
+            }
+            
+            self.selectedItemIndexPath = nil;
+            self.currentViewCenter = CGPointZero;
+            
+            if (newIndexPath) {
+                if ([self.dataSource respondsToSelector:@selector(collectionView:willDropItemAtIndexPath:toIndexPath:)]) {
+                    [self.dataSource collectionView:self.collectionView willDropItemAtIndexPath:previousIndexPath toIndexPath:newIndexPath];
                 }
                 
-                self.selectedItemIndexPath = nil;
-                self.currentViewCenter = CGPointZero;
-                
-                UICollectionViewLayoutAttributes *layoutAttributes = [self layoutAttributesForItemAtIndexPath:currentIndexPath];
-                
-                __weak typeof(self) weakSelf = self;
-                [UIView
-                 animateWithDuration:0.3
-                 delay:0.0
-                 options:UIViewAnimationOptionBeginFromCurrentState
-                 animations:^{
-                     __strong typeof(self) strongSelf = weakSelf;
-                     if (strongSelf) {
-                         strongSelf.currentView.transform = CGAffineTransformMakeScale(1.0f, 1.0f);
-                         strongSelf.currentView.center = layoutAttributes.center;
-                     }
-                 }
-                 completion:^(BOOL finished) {
-                     __strong typeof(self) strongSelf = weakSelf;
-                     if (strongSelf) {
-                         [strongSelf.currentView removeFromSuperview];
-                         strongSelf.currentView = nil;
-                         [strongSelf invalidateLayout];
-                         
-                         if ([strongSelf.delegate respondsToSelector:@selector(collectionView:layout:didEndDraggingItemAtIndexPath:)]) {
-                             [strongSelf.delegate collectionView:strongSelf.collectionView layout:strongSelf didEndDraggingItemAtIndexPath:currentIndexPath];
-                         }
-                     }
-                 }];
+                __weak typeof(self)weakSelf = self;
+                [self.collectionView deselectItemAtIndexPath:newIndexPath animated:YES];
+                [self.collectionView performBatchUpdates:^{
+                    __strong typeof(weakSelf)strongSelf = weakSelf;
+                    if (!strongSelf) {
+                        return;
+                    }
+                    
+                    if ([strongSelf.dataSource respondsToSelector:@selector(collectionView:dropItemAtIndexPath:toIndexPath:)]) {
+                        [strongSelf.dataSource collectionView:strongSelf.collectionView dropItemAtIndexPath:previousIndexPath toIndexPath:newIndexPath];
+                    }
+                    
+                    [strongSelf.collectionView deleteItemsAtIndexPaths:@[ previousIndexPath ]];
+                    [strongSelf.collectionView insertItemsAtIndexPaths:@[ newIndexPath ]];
+                } completion:^(BOOL finished) {
+                    __strong typeof(weakSelf)strongSelf = weakSelf;
+                    if (!strongSelf) {
+                        return;
+                    }
+
+                    if ([strongSelf.dataSource respondsToSelector:@selector(collectionView:didDropItemAtIndexPath:toIndexPath:)]) {
+                        [strongSelf.dataSource collectionView:strongSelf.collectionView didDropItemAtIndexPath:previousIndexPath toIndexPath:newIndexPath];
+                    }
+                }];
             }
+            
+            UICollectionViewLayoutAttributes *theLayoutAttributes;
+            if (newIndexPath) {
+                theLayoutAttributes = [self layoutAttributesForItemAtIndexPath:newIndexPath];
+            } else {
+                theLayoutAttributes = [self layoutAttributesForItemAtIndexPath:previousIndexPath];
+            }
+            
+            __weak typeof(self)weakSelf = self;
+            [UIView animateWithDuration:0.3
+                                  delay:0.0
+                                options:UIViewAnimationOptionBeginFromCurrentState
+                             animations:^{
+                                 __strong typeof(weakSelf)strongSelf = weakSelf;
+                                 if (!strongSelf) {
+                                     return;
+                                 }
+                                 
+                                 if (newIndexPath) {
+                                     strongSelf.currentView.transform = CGAffineTransformMakeScale(0.01f, 0.01f);
+                                     strongSelf.currentView.center = theLayoutAttributes.center;
+                                 } else {
+                                     strongSelf.currentView.transform = CGAffineTransformMakeScale(1.0f, 1.0f);
+                                     strongSelf.currentView.center = theLayoutAttributes.center;
+                                 }
+                             }
+                             completion:^(BOOL finished) {
+                                 __strong typeof(weakSelf)strongSelf = weakSelf;
+                                 if (!strongSelf) {
+                                     return;
+                                 }
+                                 
+                                 [strongSelf.currentView removeFromSuperview];
+                                 strongSelf.currentView = nil;
+                                 [strongSelf invalidateLayout];
+                                 
+                                 if ([strongSelf.delegate respondsToSelector:@selector(collectionView:layout:didEndDraggingItemAtIndexPath:)]) {
+                                     [strongSelf.delegate collectionView:strongSelf.collectionView layout:strongSelf didEndDraggingItemAtIndexPath:previousIndexPath];
+                                 }
+                             }];
+
+            [self resetCatchItemIfNeeded];
         } break;
             
         default: break;

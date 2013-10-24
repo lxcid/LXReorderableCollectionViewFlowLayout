@@ -49,7 +49,7 @@
 
 #pragma mark - Public
 
-- (NSMutableArray *)constructsDeck {
+- (NSMutableArray *)deck {
     if (!_deck) {
         _deck = [NSMutableArray arrayWithCapacity:52];
         for (NSInteger theRank = 1; theRank <= 13; theRank++) {

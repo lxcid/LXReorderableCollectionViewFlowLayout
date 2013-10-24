@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		90229EDA181952B600DDC199 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 90229ED9181952B600DDC199 /* QuartzCore.framework */; };
 		AB0E97C7161B4BEC005498A0 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AB0E97C6161B4BEC005498A0 /* UIKit.framework */; };
 		AB0E97C9161B4BEC005498A0 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AB0E97C8161B4BEC005498A0 /* Foundation.framework */; };
 		AB0E97CB161B4BEC005498A0 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AB0E97CA161B4BEC005498A0 /* CoreGraphics.framework */; };
@@ -26,7 +25,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		90229ED9181952B600DDC199 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		AB0E97C2161B4BEC005498A0 /* LXRCVFL Example using Storyboard.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "LXRCVFL Example using Storyboard.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		AB0E97C6161B4BEC005498A0 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		AB0E97C8161B4BEC005498A0 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -57,7 +55,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				90229EDA181952B600DDC199 /* QuartzCore.framework in Frameworks */,
 				AB0E97C7161B4BEC005498A0 /* UIKit.framework in Frameworks */,
 				AB0E97C9161B4BEC005498A0 /* Foundation.framework in Frameworks */,
 				AB0E97CB161B4BEC005498A0 /* CoreGraphics.framework in Frameworks */,
@@ -89,7 +86,6 @@
 		AB0E97C5161B4BEC005498A0 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				90229ED9181952B600DDC199 /* QuartzCore.framework */,
 				AB0E97C6161B4BEC005498A0 /* UIKit.framework */,
 				AB0E97C8161B4BEC005498A0 /* Foundation.framework */,
 				AB0E97CA161B4BEC005498A0 /* CoreGraphics.framework */,
@@ -336,7 +332,6 @@
 				AB0E97E8161B4BEC005498A0 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

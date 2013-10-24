@@ -19,9 +19,6 @@ typedef NS_ENUM(NSInteger, PlayingCardSuit) {
 
 @property (assign, nonatomic) PlayingCardSuit suit;
 @property (assign, nonatomic) NSInteger rank;
-
 @property (copy, nonatomic, readonly) NSString *imageName;
-@property (copy, nonatomic, readonly) NSString *suiteName;
-@property (copy, nonatomic, readonly) NSString *rankName;
 
 @end

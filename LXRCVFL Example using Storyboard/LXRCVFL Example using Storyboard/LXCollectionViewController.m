@@ -66,7 +66,6 @@
             [theDeck addObject:thePlayingCard];
         }
     }
-    
     return theDeck;
 }
 
@@ -78,25 +77,6 @@
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
-}
-
-#pragma mark - Private
-
-- (void)logDeck {
-    NSLog(@"self.deck: (");
-    UIInterfaceOrientation statusBarOrientation = [UIApplication sharedApplication].statusBarOrientation;
-    NSInteger splitCount = (UIInterfaceOrientationIsPortrait(statusBarOrientation) ? 4 : 5);
-    
-    NSInteger index = 0;
-    for (PlayingCard *thePlayingCard in self.deck) {
-        printf("\t%-8s", [[thePlayingCard description] UTF8String]);
-        index++;
-        if (index % splitCount == 0) {
-            printf("\n");
-        }
-    }
-    printf("\n");
-    NSLog(@")");
 }
 
 #pragma mark - UICollectionViewDataSource methods
@@ -128,75 +108,12 @@
     }
 }
 
-#pragma mark - LXReorderableCollectionViewDataSource methods
+#pragma mark - LXReorderableCollectionViewDelegateFlowLayout methods
 
-- (BOOL)collectionView:(UICollectionView *)collectionView canMoveItemAtIndexPath:(NSIndexPath *)indexPath {
-    PlayingCard *thePlayingCard = [self.deck objectAtIndex:indexPath.item];
-
-    // can move everything except hearts
-    return (thePlayingCard.suit != PlayingCardSuitHeart);
-}
-
-- (BOOL)collectionView:(UICollectionView *)collectionView canMoveItemAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath {
-
-    // can move anywhere
-    return YES;
-}
-
-- (void)collectionView:(UICollectionView *)collectionView willMoveItemAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath {
-    
-    NSLog(@"%s%@:%@", __PRETTY_FUNCTION__, fromIndexPath, toIndexPath);
-    [self logDeck];
-}
-
-- (void)collectionView:(UICollectionView *)collectionView moveItemAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath {
-    
-    NSLog(@"%s%@:%@", __PRETTY_FUNCTION__, fromIndexPath, toIndexPath);
-
-    id theFromItem = [self.deck objectAtIndex:fromIndexPath.item];
-    [self.deck removeObjectAtIndex:fromIndexPath.item];
-    [self.deck insertObject:theFromItem atIndex:toIndexPath.item];
-}
-
-- (void)collectionView:(UICollectionView *)collectionView didMoveItemAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath {
-    
-    NSLog(@"%s%@:%@", __PRETTY_FUNCTION__, fromIndexPath, toIndexPath);
-    [self logDeck];
-}
-
-- (BOOL)collectionView:(UICollectionView *)collectionView canDropItemAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath {
-    
-    PlayingCard *thePlayingCard = [self.deck objectAtIndex:toIndexPath.item];
-    
-    // can drop only on hearts
-    return (thePlayingCard.suit == PlayingCardSuitHeart);
-}
-
-- (void)collectionView:(UICollectionView *)collectionView willDropItemAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath {
-    
-    NSLog(@"%s%@:%@", __PRETTY_FUNCTION__, fromIndexPath, toIndexPath);
-    [self logDeck];
-}
-
-- (void)collectionView:(UICollectionView *)collectionView dropItemAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath {
-    
-    NSLog(@"%s%@:%@", __PRETTY_FUNCTION__, fromIndexPath, toIndexPath);
-    
-    // remove old card
-    id theToItem = [self.deck objectAtIndex:toIndexPath.item];
-    [self.deck removeObject:theToItem];
-    [collectionView deleteItemsAtIndexPaths:@[toIndexPath]];
-
-    id theFromItem = [self.deck objectAtIndex:fromIndexPath.item];
-    // insert new card
-    [self.deck removeObjectAtIndex:fromIndexPath.item];
-    [self.deck insertObject:theFromItem atIndex:toIndexPath.item];
-}
-
-- (void)collectionView:(UICollectionView *)collectionView didDropItemAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath {
-    
-    NSLog(@"%s%@:%@", __PRETTY_FUNCTION__, fromIndexPath, toIndexPath);
-    [self logDeck];
+- (void)collectionView:(UICollectionView *)theCollectionView layout:(UICollectionViewLayout *)theLayout itemAtIndexPath:(NSIndexPath *)theFromIndexPath willMoveToIndexPath:(NSIndexPath *)theToIndexPath {
+    id theFromItem = [self.deck objectAtIndex:theFromIndexPath.item];
+    [self.deck removeObjectAtIndex:theFromIndexPath.item];
+    [self.deck insertObject:theFromItem atIndex:theToIndexPath.item];
 }
 
 @end

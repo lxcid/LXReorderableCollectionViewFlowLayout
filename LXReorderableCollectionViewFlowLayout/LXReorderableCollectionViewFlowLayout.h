@@ -9,38 +9,38 @@
 
 @interface LXReorderableCollectionViewFlowLayout : UICollectionViewFlowLayout <UIGestureRecognizerDelegate>
 
+@property (assign, nonatomic) UIEdgeInsets triggerScrollingEdgeInsets;
 @property (assign, nonatomic) CGFloat scrollingSpeed;
-@property (assign, nonatomic) UIEdgeInsets scrollingTriggerEdgeInsets;
-@property (strong, nonatomic, readonly) UILongPressGestureRecognizer *longPressGestureRecognizer;
-@property (strong, nonatomic, readonly) UIPanGestureRecognizer *panGestureRecognizer;
+@property (strong, nonatomic) NSTimer *scrollingTimer;
 
-- (void)setUpGestureRecognizersOnCollectionView __attribute__((deprecated("Calls to setUpGestureRecognizersOnCollectionView method are not longer needed as setup are done automatically through KVO.")));
+@property (weak, nonatomic) UILongPressGestureRecognizer *longPressGestureRecognizer;
+@property (weak, nonatomic) UIPanGestureRecognizer *panGestureRecognizer;
 
-@end
+@property (strong, nonatomic) NSIndexPath *selectedItemIndexPath;
+@property (weak, nonatomic) UIView *currentView;
+@property (assign, nonatomic) CGPoint currentViewCenter;
+@property (assign, nonatomic) CGPoint panTranslationInCollectionView;
 
-@protocol LXReorderableCollectionViewDataSource <UICollectionViewDataSource>
+@property (assign, nonatomic) BOOL alwaysScroll;
 
-@optional
+@property (strong, nonatomic) NSTimer *invalidateLayoutTimer;
+@property (strong, nonatomic) NSIndexPath *catchItemIndexPath;
 
-- (BOOL)collectionView:(UICollectionView *)collectionView canMoveItemAtIndexPath:(NSIndexPath *)indexPath;
-- (BOOL)collectionView:(UICollectionView *)collectionView canMoveItemAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath;
-- (void)collectionView:(UICollectionView *)collectionView willMoveItemAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath;
-- (void)collectionView:(UICollectionView *)collectionView moveItemAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath;
-- (void)collectionView:(UICollectionView *)collectionView didMoveItemAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath;
-
-- (BOOL)collectionView:(UICollectionView *)collectionView canDropItemAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath;
-- (void)collectionView:(UICollectionView *)collectionView willDropItemAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath;
-- (void)collectionView:(UICollectionView *)collectionView dropItemAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath;
-- (void)collectionView:(UICollectionView *)collectionView didDropItemAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath;
+- (void)setUpGestureRecognizersOnCollectionView;
 
 @end
 
 @protocol LXReorderableCollectionViewDelegateFlowLayout <UICollectionViewDelegateFlowLayout>
+
+- (void)collectionView:(UICollectionView *)theCollectionView layout:(UICollectionViewLayout *)theLayout itemAtIndexPath:(NSIndexPath *)theFromIndexPath willMoveToIndexPath:(NSIndexPath *)theToIndexPath;
+
 @optional
 
-- (void)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout willBeginDraggingItemAtIndexPath:(NSIndexPath *)indexPath;
-- (void)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout didBeginDraggingItemAtIndexPath:(NSIndexPath *)indexPath;
-- (void)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout willEndDraggingItemAtIndexPath:(NSIndexPath *)indexPath;
-- (void)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout didEndDraggingItemAtIndexPath:(NSIndexPath *)indexPath;
+- (void)collectionView:(UICollectionView *)theCollectionView layout:(UICollectionViewLayout *)theLayout willBeginReorderingAtIndexPath:(NSIndexPath *)theIndexPath;
+- (void)collectionView:(UICollectionView *)theCollectionView layout:(UICollectionViewLayout *)theLayout didBeginReorderingAtIndexPath:(NSIndexPath *)theIndexPath;
+- (void)collectionView:(UICollectionView *)theCollectionView layout:(UICollectionViewLayout *)theLayout willEndReorderingAtIndexPath:(NSIndexPath *)theIndexPath;
+- (void)collectionView:(UICollectionView *)theCollectionView layout:(UICollectionViewLayout *)theLayout didEndReorderingAtIndexPath:(NSIndexPath *)theIndexPath;
+- (BOOL)collectionView:(UICollectionView *)theCollectionView layout:(UICollectionViewLayout *)theLayout shouldDropIndexPath:(NSIndexPath *)theDropIndexPath onIndexPath:(NSIndexPath *)theCatchIndexPath;
+- (void)collectionView:(UICollectionView *)theCollectionView layout:(UICollectionViewLayout *)theLayout willDropIndexPath:(NSIndexPath *)theDropIndexPath onIndexPath:(NSIndexPath *)theCatchIndexPath;
 
 @end

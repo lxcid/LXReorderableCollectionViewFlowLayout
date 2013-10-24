@@ -27,4 +27,45 @@
     }
 }
 
+- (NSString *)suiteName {
+    switch (self.suit) {
+        case PlayingCardSuitSpade: {
+            return @"♠";
+        } break;
+        case PlayingCardSuitHeart: {
+            return @"♥";
+        } break;
+        case PlayingCardSuitClub: {
+            return @"♣";
+        } break;
+        case PlayingCardSuitDiamond: {
+            return @"♦";
+        } break;
+    }
+}
+
+- (NSString *)rankName {
+    switch (self.rank) {
+        case 1: {
+            return @"A";
+        } break;
+        case 11: {
+            return @"J";
+        } break;
+        case 12: {
+            return @"Q";
+        } break;
+        case 13: {
+            return @"K";
+        } break;
+        default: {
+            return [NSString stringWithFormat:@"%i", self.rank];
+        } break;
+    }
+}
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"%@ %@", self.suiteName, self.rankName];
+}
+
 @end

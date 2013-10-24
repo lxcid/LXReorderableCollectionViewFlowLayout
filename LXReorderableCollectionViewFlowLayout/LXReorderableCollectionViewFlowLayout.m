@@ -7,62 +7,143 @@
 
 #import "LXReorderableCollectionViewFlowLayout.h"
 #import <QuartzCore/QuartzCore.h>
+#import <objc/runtime.h>
 
 #define LX_FRAMES_PER_SECOND 60.0
 
 #ifndef CGGEOMETRY_LXSUPPORT_H_
 CG_INLINE CGPoint
-LXS_CGPointAdd(CGPoint thePoint1, CGPoint thePoint2) {
-    return CGPointMake(thePoint1.x + thePoint2.x, thePoint1.y + thePoint2.y);
+LXS_CGPointAdd(CGPoint point1, CGPoint point2) {
+    return CGPointMake(point1.x + point2.x, point1.y + point2.y);
 }
 #endif
 
-typedef NS_ENUM(NSInteger, LXReorderableCollectionViewFlowLayoutScrollingDirection) {
-    LXReorderableCollectionViewFlowLayoutScrollingDirectionUp = 1,
-    LXReorderableCollectionViewFlowLayoutScrollingDirectionDown,
-    LXReorderableCollectionViewFlowLayoutScrollingDirectionLeft,
-    LXReorderableCollectionViewFlowLayoutScrollingDirectionRight
+typedef NS_ENUM(NSInteger, LXScrollingDirection) {
+    LXScrollingDirectionUnknown = 0,
+    LXScrollingDirectionUp,
+    LXScrollingDirectionDown,
+    LXScrollingDirectionLeft,
+    LXScrollingDirectionRight
 };
 
-static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirectionKey = @"LXScrollingDirection";
+static NSString * const kLXScrollingDirectionKey = @"LXScrollingDirection";
+static NSString * const kLXCollectionViewKeyPath = @"collectionView";
+
+@interface CADisplayLink (LX_userInfo)
+@property (nonatomic, copy) NSDictionary *LX_userInfo;
+@end
+
+@implementation CADisplayLink (LX_userInfo)
+- (void) setLX_userInfo:(NSDictionary *) LX_userInfo {
+    objc_setAssociatedObject(self, "LX_userInfo", LX_userInfo, OBJC_ASSOCIATION_COPY);
+}
+
+- (NSDictionary *) LX_userInfo {
+    return objc_getAssociatedObject(self, "LX_userInfo");
+}
+@end
+
+@interface UICollectionViewCell (LXReorderableCollectionViewFlowLayout)
+
+- (UIImage *)LX_rasterizedImage;
+
+@end
+
+@implementation UICollectionViewCell (LXReorderableCollectionViewFlowLayout)
+
+- (UIImage *)LX_rasterizedImage {
+    self.layer.masksToBounds = NO;
+    UIGraphicsBeginImageContextWithOptions(self.bounds.size, /*self.isOpaque*/ NO, 0.0f);
+    [self.layer renderInContext:UIGraphicsGetCurrentContext()];
+    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    self.layer.masksToBounds = YES;
+    return image;
+}
+
+@end
+
+@interface LXReorderableCollectionViewFlowLayout ()
+
+@property (strong, nonatomic) NSIndexPath *selectedItemIndexPath;
+@property (strong, nonatomic) NSIndexPath *catchItemIndexPath;
+@property (strong, nonatomic) UIView *currentView;
+@property (assign, nonatomic) CGPoint currentViewCenter;
+@property (assign, nonatomic) CGPoint panTranslationInCollectionView;
+@property (strong, nonatomic) CADisplayLink *displayLink;
+
+@property (assign, nonatomic, readonly) id<LXReorderableCollectionViewDataSource> dataSource;
+@property (assign, nonatomic, readonly) id<LXReorderableCollectionViewDelegateFlowLayout> delegate;
+
+@end
 
 @implementation LXReorderableCollectionViewFlowLayout
 
-- (void)setUpGestureRecognizersOnCollectionView {
-    UILongPressGestureRecognizer *theLongPressGestureRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleLongPressGesture:)];
+- (void)setDefaults {
+    _scrollingSpeed = 300.0f;
+    _scrollingTriggerEdgeInsets = UIEdgeInsetsMake(50.0f, 50.0f, 50.0f, 50.0f);
+}
+
+- (void)setupCollectionView {
+    _longPressGestureRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self
+                                                                                action:@selector(handleLongPressGesture:)];
+    _longPressGestureRecognizer.delegate = self;
+    
     // Links the default long press gesture recognizer to the custom long press gesture recognizer we are creating now
     // by enforcing failure dependency so that they doesn't clash.
-    for (UIGestureRecognizer *theGestureRecognizer in self.collectionView.gestureRecognizers) {
-        if ([theGestureRecognizer isKindOfClass:[UILongPressGestureRecognizer class]]) {
-            [theGestureRecognizer requireGestureRecognizerToFail:theLongPressGestureRecognizer];
+    for (UIGestureRecognizer *gestureRecognizer in self.collectionView.gestureRecognizers) {
+        if ([gestureRecognizer isKindOfClass:[UILongPressGestureRecognizer class]]) {
+            [gestureRecognizer requireGestureRecognizerToFail:_longPressGestureRecognizer];
         }
     }
-    theLongPressGestureRecognizer.delegate = self;
-    [self.collectionView addGestureRecognizer:theLongPressGestureRecognizer];
-    self.longPressGestureRecognizer = theLongPressGestureRecognizer;
     
-    UIPanGestureRecognizer *thePanGestureRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePanGesture:)];
-    thePanGestureRecognizer.delegate = self;
-    [self.collectionView addGestureRecognizer:thePanGestureRecognizer];
-    self.panGestureRecognizer = thePanGestureRecognizer;
+    [self.collectionView addGestureRecognizer:_longPressGestureRecognizer];
     
-    self.triggerScrollingEdgeInsets = UIEdgeInsetsMake(50.0f, 50.0f, 50.0f, 50.0f);
-    self.scrollingSpeed = 300.0f;
-    [self.scrollingTimer invalidate];
-    self.scrollingTimer = nil;
-    self.alwaysScroll = YES;
+    _panGestureRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self
+                                                                    action:@selector(handlePanGesture:)];
+    _panGestureRecognizer.delegate = self;
+    [self.collectionView addGestureRecognizer:_panGestureRecognizer];
+
+    // Useful in multiple scenarios: one common scenario being when the Notification Center drawer is pulled down
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleApplicationWillResignActive:) name: UIApplicationWillResignActiveNotification object:nil];
 }
 
-- (void)awakeFromNib {
-    [self setUpGestureRecognizersOnCollectionView];
-}
-
-#pragma mark - Custom methods
-
-- (void)applyLayoutAttributes:(UICollectionViewLayoutAttributes *)theLayoutAttributes {
-    if ([theLayoutAttributes.indexPath isEqual:self.selectedItemIndexPath]) {
-        theLayoutAttributes.hidden = YES;
+- (id)init {
+    self = [super init];
+    if (self){
+        [self setDefaults];
+        [self addObserver:self forKeyPath:kLXCollectionViewKeyPath options:NSKeyValueObservingOptionNew context:nil];
     }
+    return self;
+}
+
+- (id)initWithCoder:(NSCoder *)aDecoder {
+    self = [super initWithCoder:aDecoder];
+    if (self){
+        [self setDefaults];
+        [self addObserver:self forKeyPath:kLXCollectionViewKeyPath options:NSKeyValueObservingOptionNew context:nil];
+    }
+    return self;
+}
+
+- (void)dealloc {
+    [self invalidatesScrollTimer];
+    [self removeObserver:self forKeyPath:kLXCollectionViewKeyPath];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationWillResignActiveNotification object:nil];
+}
+
+- (void)applyLayoutAttributes:(UICollectionViewLayoutAttributes *)layoutAttributes {
+    if ([layoutAttributes.indexPath isEqual:self.selectedItemIndexPath]) {
+        layoutAttributes.hidden = YES;
+    }
+}
+
+- (id<LXReorderableCollectionViewDataSource>)dataSource {
+    return (id<LXReorderableCollectionViewDataSource>)self.collectionView.dataSource;
+}
+
+- (id<LXReorderableCollectionViewDelegateFlowLayout>)delegate {
+    return (id<LXReorderableCollectionViewDelegateFlowLayout>)self.collectionView.delegate;
 }
 
 - (void)resetCatchItemIfNeeded {
@@ -72,487 +153,461 @@ static NSString * const kLXReorderableCollectionViewFlowLayoutScrollingDirection
     }
 }
 
-- (void)moveCurrentItemToIndexPath:(NSIndexPath *)theIndexPathOfSelectedItem {
+- (void)moveCurrentItemToIndexPath:(NSIndexPath *)newIndexPath {
     [self resetCatchItemIfNeeded];
     
-    if (!theIndexPathOfSelectedItem) {
+    NSIndexPath *previousIndexPath = self.selectedItemIndexPath;
+    
+    if ((newIndexPath == nil) || [newIndexPath isEqual:previousIndexPath]) {
         return;
     }
     
-    if ([theIndexPathOfSelectedItem isEqual:self.selectedItemIndexPath]) { // If theIndexPathOfSelectedItem is equals to current selectedItemIndexPath...
+    if ([self.dataSource respondsToSelector:@selector(collectionView:canMoveItemAtIndexPath:toIndexPath:)] &&
+        ![self.dataSource collectionView:self.collectionView canMoveItemAtIndexPath:previousIndexPath toIndexPath:newIndexPath]) {
         return;
     }
     
-    NSIndexPath *thePreviousSelectedIndexPath = self.selectedItemIndexPath;
-    self.selectedItemIndexPath = theIndexPathOfSelectedItem;
+    self.selectedItemIndexPath = newIndexPath;
     
-    if (![self.collectionView.delegate conformsToProtocol:@protocol(LXReorderableCollectionViewDelegateFlowLayout)]) { // If collectionView delegate does not conforms to LXReorderableCollectionViewDelegateFlowLayout... (If the variable is populated, then there's a serious issue here)
-        return;
+    if ([self.dataSource respondsToSelector:@selector(collectionView:willMoveItemAtIndexPath:toIndexPath:)]) {
+        [self.dataSource collectionView:self.collectionView willMoveItemAtIndexPath:previousIndexPath toIndexPath:newIndexPath];
     }
     
-    id<LXReorderableCollectionViewDelegateFlowLayout> theDelegate = (id<LXReorderableCollectionViewDelegateFlowLayout>)self.collectionView.delegate;
-    [theDelegate collectionView:self.collectionView layout:self itemAtIndexPath:thePreviousSelectedIndexPath willMoveToIndexPath:theIndexPathOfSelectedItem];
-    
+    __weak typeof(self)weakSelf = self;
     [self.collectionView performBatchUpdates:^{
-        //[self.collectionView moveItemAtIndexPath:thePreviousSelectedIndexPath toIndexPath:theIndexPathOfSelectedItem];
-        [self.collectionView deleteItemsAtIndexPaths:@[ thePreviousSelectedIndexPath ]];
-        [self.collectionView insertItemsAtIndexPaths:@[ theIndexPathOfSelectedItem ]];
+        __strong typeof(weakSelf)strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        
+        if ([strongSelf.dataSource respondsToSelector:@selector(collectionView:moveItemAtIndexPath:toIndexPath:)]) {
+            [strongSelf.dataSource collectionView:strongSelf.collectionView moveItemAtIndexPath:previousIndexPath toIndexPath:newIndexPath];
+        }
+        
+        [strongSelf.collectionView deleteItemsAtIndexPaths:@[ previousIndexPath ]];
+        [strongSelf.collectionView insertItemsAtIndexPaths:@[ newIndexPath ]];
     } completion:^(BOOL finished) {
+        __strong typeof(weakSelf)strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+
+        if ([strongSelf.dataSource respondsToSelector:@selector(collectionView:didMoveItemAtIndexPath:toIndexPath:)]) {
+            [strongSelf.dataSource collectionView:strongSelf.collectionView didMoveItemAtIndexPath:previousIndexPath toIndexPath:newIndexPath];
+        }
     }];
 }
 
-- (void)dropCurrentItemOnIndexPath:(NSIndexPath *)theIndexPathOfSelectedItem {
-    if (!theIndexPathOfSelectedItem) { // If theIndexPathOfSelectedItem is not available...
+- (void)dropCurrentItemOnIndexPath:(NSIndexPath *)newIndexPath {
+    if ((newIndexPath == nil) || [newIndexPath isEqual:self.selectedItemIndexPath] || [newIndexPath isEqual:self.catchItemIndexPath]) {
         [self resetCatchItemIfNeeded];
         return;
     }
     
-    if ([theIndexPathOfSelectedItem isEqual:self.selectedItemIndexPath]) { // If theIndexPathOfSelectedItem is equals to current selectedItemIndexPath... 
-        [self resetCatchItemIfNeeded];
+    if (![self.dataSource respondsToSelector:@selector(collectionView:canDropItemAtIndexPath:toIndexPath:)]) {
+        [self moveCurrentItemToIndexPath:newIndexPath];
         return;
     }
-    
-    if ([theIndexPathOfSelectedItem isEqual:self.catchItemIndexPath]) { // If theIndexPathOfSelectedItem is equals to current catchItemIndexPath...
-        return;
-    }
-    
-    if (![self.collectionView.delegate conformsToProtocol:@protocol(LXReorderableCollectionViewDelegateFlowLayout)]) { // If collectionView delegate does not conforms to LXReorderableCollectionViewDelegateFlowLayout... (If the variable is populated, then there's a serious issue here)
-        return;
-    }
-    
-    id<LXReorderableCollectionViewDelegateFlowLayout> theDelegate = (id<LXReorderableCollectionViewDelegateFlowLayout>)self.collectionView.delegate;
-    
-    if (![theDelegate respondsToSelector:@selector(collectionView:layout:shouldDropIndexPath:onIndexPath:)]) { // If it response to collectionView:layout:shouldDropIndexPath:onIndexPath:...
-        [self moveCurrentItemToIndexPath:theIndexPathOfSelectedItem];
-        return;
-    }
-    
-    if ([theDelegate collectionView:self.collectionView layout:self shouldDropIndexPath:self.selectedItemIndexPath onIndexPath:theIndexPathOfSelectedItem]) {
-        self.catchItemIndexPath = theIndexPathOfSelectedItem;
-        [self.collectionView selectItemAtIndexPath:theIndexPathOfSelectedItem animated:YES scrollPosition:UICollectionViewScrollPositionNone];
+
+    if ([self.dataSource collectionView:self.collectionView canDropItemAtIndexPath:self.selectedItemIndexPath toIndexPath:newIndexPath]) {
+        self.catchItemIndexPath = newIndexPath;
+        [self.collectionView selectItemAtIndexPath:newIndexPath animated:YES scrollPosition:UICollectionViewScrollPositionNone];
     } else {
-        [self moveCurrentItemToIndexPath:theIndexPathOfSelectedItem];
+        [self moveCurrentItemToIndexPath:newIndexPath];
     }
 }
 
 - (void)invalidateLayoutIfNecessary {
     CGPoint theCurrentViewCenter = self.currentView.center;
-    NSIndexPath *theIndexPathOfSelectedItem = [self.collectionView indexPathForItemAtPoint:theCurrentViewCenter];
+    NSIndexPath *newIndePath = [self.collectionView indexPathForItemAtPoint:theCurrentViewCenter];
     
-    UICollectionViewLayoutAttributes *theLayoutAttributesOfSelectedItem = [self layoutAttributesForItemAtIndexPath:theIndexPathOfSelectedItem];
+    UICollectionViewLayoutAttributes *theLayoutAttributesOfSelectedItem = [self layoutAttributesForItemAtIndexPath:newIndePath];
     CGRect theFrame = theLayoutAttributesOfSelectedItem.frame;
-    CGRect theLeftFrame;
-    CGRect theRightFrame;
-    CGRectDivide(theFrame, &theLeftFrame, &theRightFrame, CGRectGetWidth(theFrame) / 2.0f, CGRectMinXEdge);
+    CGRect intersectionFrame = CGRectIntersection(self.currentView.frame, theFrame);
     
-    if (CGRectContainsPoint(theLeftFrame, theCurrentViewCenter)) {
-        if (self.selectedItemIndexPath.item > theIndexPathOfSelectedItem.item) {
-            [self moveCurrentItemToIndexPath:theIndexPathOfSelectedItem];
-        } else {
-            [self dropCurrentItemOnIndexPath:theIndexPathOfSelectedItem];
-        }
-    } else if (CGRectContainsPoint(theRightFrame, theCurrentViewCenter)) {
-        if (self.selectedItemIndexPath.item < theIndexPathOfSelectedItem.item) {
-            [self moveCurrentItemToIndexPath:theIndexPathOfSelectedItem];
-        } else {
-            [self dropCurrentItemOnIndexPath:theIndexPathOfSelectedItem];
+    if (intersectionFrame.size.height > theFrame.size.height/2 && intersectionFrame.size.width > theFrame.size.width/2) {
+        [self dropCurrentItemOnIndexPath:newIndePath];
+    } else {
+        [self moveCurrentItemToIndexPath:newIndePath];
+    }
+}
+
+- (void)invalidatesScrollTimer {
+    if (!self.displayLink.paused) {
+        [self.displayLink invalidate];
+    }
+    self.displayLink = nil;
+}
+
+- (void)setupScrollTimerInDirection:(LXScrollingDirection)direction {
+    if (!self.displayLink.paused) {
+        LXScrollingDirection oldDirection = [self.displayLink.LX_userInfo[kLXScrollingDirectionKey] integerValue];
+
+        if (direction == oldDirection) {
+            return;
         }
     }
+    
+    [self invalidatesScrollTimer];
+
+    self.displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(handleScroll:)];
+    self.displayLink.LX_userInfo = @{ kLXScrollingDirectionKey : @(direction) };
+
+    [self.displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
 }
 
 #pragma mark - Target/Action methods
 
-- (void)handleScroll:(NSTimer *)theTimer {
-    LXReorderableCollectionViewFlowLayoutScrollingDirection theScrollingDirection = (LXReorderableCollectionViewFlowLayoutScrollingDirection)[theTimer.userInfo[kLXReorderableCollectionViewFlowLayoutScrollingDirectionKey] integerValue];
-    switch (theScrollingDirection) {
-        case LXReorderableCollectionViewFlowLayoutScrollingDirectionUp: {
-            CGFloat theDistance = -(self.scrollingSpeed / LX_FRAMES_PER_SECOND);
-            CGPoint theContentOffset = self.collectionView.contentOffset;
-            CGFloat theMinY = 0.0f;
-            if ((theContentOffset.y + theDistance) <= theMinY) {
-                theDistance = -theContentOffset.y;
-            }
-            self.collectionView.contentOffset = LXS_CGPointAdd(theContentOffset, CGPointMake(0.0f, theDistance));
-            self.currentViewCenter = LXS_CGPointAdd(self.currentViewCenter, CGPointMake(0.0f, theDistance));
-            self.currentView.center = LXS_CGPointAdd(self.currentViewCenter, self.panTranslationInCollectionView);
-        } break;
-        case LXReorderableCollectionViewFlowLayoutScrollingDirectionDown: {
-            CGFloat theDistance = (self.scrollingSpeed / LX_FRAMES_PER_SECOND);
-            CGPoint theContentOffset = self.collectionView.contentOffset;
-            CGFloat theMaxY = MAX(self.collectionView.contentSize.height, CGRectGetHeight(self.collectionView.bounds)) - CGRectGetHeight(self.collectionView.bounds);
-            if ((theContentOffset.y + theDistance) >= theMaxY) {
-                theDistance = theMaxY - theContentOffset.y;
-            }
-            self.collectionView.contentOffset = LXS_CGPointAdd(theContentOffset, CGPointMake(0.0f, theDistance));
-            self.currentViewCenter = LXS_CGPointAdd(self.currentViewCenter, CGPointMake(0.0f, theDistance));
-            self.currentView.center = LXS_CGPointAdd(self.currentViewCenter, self.panTranslationInCollectionView);
-        } break;
+// Tight loop, allocate memory sparely, even if they are stack allocation.
+- (void)handleScroll:(CADisplayLink *)displayLink {
+    LXScrollingDirection direction = (LXScrollingDirection)[displayLink.LX_userInfo[kLXScrollingDirectionKey] integerValue];
+    if (direction == LXScrollingDirectionUnknown) {
+        return;
+    }
+    
+    CGSize frameSize = self.collectionView.bounds.size;
+    CGSize contentSize = self.collectionView.contentSize;
+    CGPoint contentOffset = self.collectionView.contentOffset;
+    CGFloat distance = self.scrollingSpeed / LX_FRAMES_PER_SECOND;
+    CGPoint translation = CGPointZero;
+    
+    switch(direction) {
+        case LXScrollingDirectionUp: {
+            distance = -distance;
+            CGFloat minY = 0.0f;
             
-        case LXReorderableCollectionViewFlowLayoutScrollingDirectionLeft: {
-            CGFloat theDistance = -(self.scrollingSpeed / LX_FRAMES_PER_SECOND);
-            CGPoint theContentOffset = self.collectionView.contentOffset;
-            CGFloat theMinX = 0.0f;
-            if ((theContentOffset.x + theDistance) <= theMinX) {
-                theDistance = -theContentOffset.x;
+            if ((contentOffset.y + distance) <= minY) {
+                distance = -contentOffset.y;
             }
-            self.collectionView.contentOffset = LXS_CGPointAdd(theContentOffset, CGPointMake(theDistance, 0.0f));
-            self.currentViewCenter = LXS_CGPointAdd(self.currentViewCenter, CGPointMake(theDistance, 0.0f));
-            self.currentView.center = LXS_CGPointAdd(self.currentViewCenter, self.panTranslationInCollectionView);
-        } break;
-        case LXReorderableCollectionViewFlowLayoutScrollingDirectionRight: {
-            CGFloat theDistance = (self.scrollingSpeed / LX_FRAMES_PER_SECOND);
-            CGPoint theContentOffset = self.collectionView.contentOffset;
-            CGFloat theMaxX = MAX(self.collectionView.contentSize.width, CGRectGetWidth(self.collectionView.bounds)) - CGRectGetWidth(self.collectionView.bounds);
-            if ((theContentOffset.x + theDistance) >= theMaxX) {
-                theDistance = theMaxX - theContentOffset.x;
-            }
-            self.collectionView.contentOffset = LXS_CGPointAdd(theContentOffset, CGPointMake(theDistance, 0.0f));
-            self.currentViewCenter = LXS_CGPointAdd(self.currentViewCenter, CGPointMake(theDistance, 0.0f));
-            self.currentView.center = LXS_CGPointAdd(self.currentViewCenter, self.panTranslationInCollectionView);
-        } break;
             
+            translation = CGPointMake(0.0f, distance);
+        } break;
+        case LXScrollingDirectionDown: {
+            CGFloat maxY = MAX(contentSize.height, frameSize.height) - frameSize.height;
+            
+            if ((contentOffset.y + distance) >= maxY) {
+                distance = maxY - contentOffset.y;
+            }
+            
+            translation = CGPointMake(0.0f, distance);
+        } break;
+        case LXScrollingDirectionLeft: {
+            distance = -distance;
+            CGFloat minX = 0.0f;
+            
+            if ((contentOffset.x + distance) <= minX) {
+                distance = -contentOffset.x;
+            }
+            
+            translation = CGPointMake(distance, 0.0f);
+        } break;
+        case LXScrollingDirectionRight: {
+            CGFloat maxX = MAX(contentSize.width, frameSize.width) - frameSize.width;
+            
+            if ((contentOffset.x + distance) >= maxX) {
+                distance = maxX - contentOffset.x;
+            }
+            
+            translation = CGPointMake(distance, 0.0f);
+        } break;
         default: {
+            // Do nothing...
         } break;
     }
+    
+    self.currentViewCenter = LXS_CGPointAdd(self.currentViewCenter, translation);
+    self.currentView.center = LXS_CGPointAdd(self.currentViewCenter, self.panTranslationInCollectionView);
+    self.collectionView.contentOffset = LXS_CGPointAdd(contentOffset, translation);
 }
 
-- (void)handleLongPressGesture:(UILongPressGestureRecognizer *)theLongPressGestureRecognizer {
-    switch (theLongPressGestureRecognizer.state) {
+
+- (void)handleLongPressGesture:(UILongPressGestureRecognizer *)gestureRecognizer {
+    switch(gestureRecognizer.state) {
         case UIGestureRecognizerStateBegan: {
-            CGPoint theLocationInCollectionView = [theLongPressGestureRecognizer locationInView:self.collectionView];
-            NSIndexPath *theIndexPathOfSelectedItem = [self.collectionView indexPathForItemAtPoint:theLocationInCollectionView];
+            NSIndexPath *currentIndexPath = [self.collectionView indexPathForItemAtPoint:[gestureRecognizer locationInView:self.collectionView]];
             
-            if ([self.collectionView.delegate conformsToProtocol:@protocol(LXReorderableCollectionViewDelegateFlowLayout)]) {
-                id<LXReorderableCollectionViewDelegateFlowLayout> theDelegate = (id<LXReorderableCollectionViewDelegateFlowLayout>)self.collectionView.delegate;
-                if ([theDelegate respondsToSelector:@selector(collectionView:layout:willBeginReorderingAtIndexPath:)]) {
-                    [theDelegate collectionView:self.collectionView layout:self willBeginReorderingAtIndexPath:theIndexPathOfSelectedItem];
-                }
+            if (!currentIndexPath) {
+                return ;
             }
             
-            UICollectionViewCell *theCollectionViewCell = [self.collectionView cellForItemAtIndexPath:theIndexPathOfSelectedItem];
+            if ([self.dataSource respondsToSelector:@selector(collectionView:canMoveItemAtIndexPath:)] &&
+               ![self.dataSource collectionView:self.collectionView canMoveItemAtIndexPath:currentIndexPath]) {
+                return;
+            }
             
-            theCollectionViewCell.highlighted = YES;
-            UIGraphicsBeginImageContextWithOptions(theCollectionViewCell.bounds.size, theCollectionViewCell.opaque, 0.0f);
-            [theCollectionViewCell.layer renderInContext:UIGraphicsGetCurrentContext()];
-            UIImage *theHighlightedImage = UIGraphicsGetImageFromCurrentImageContext();
-            UIGraphicsEndImageContext();
+            self.selectedItemIndexPath = currentIndexPath;
             
-            theCollectionViewCell.highlighted = NO;
-            UIGraphicsBeginImageContextWithOptions(theCollectionViewCell.bounds.size, theCollectionViewCell.opaque, 0.0f);
-            [theCollectionViewCell.layer renderInContext:UIGraphicsGetCurrentContext()];
-            UIImage *theImage = UIGraphicsGetImageFromCurrentImageContext();
-            UIGraphicsEndImageContext();
+            if ([self.delegate respondsToSelector:@selector(collectionView:layout:willBeginDraggingItemAtIndexPath:)]) {
+                [self.delegate collectionView:self.collectionView layout:self willBeginDraggingItemAtIndexPath:self.selectedItemIndexPath];
+            }
             
-            UIImageView *theImageView = [[UIImageView alloc] initWithImage:theImage];
-            theImageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight; // Not using constraints, lets auto resizing mask be translated automatically...
+            UICollectionViewCell *collectionViewCell = [self.collectionView cellForItemAtIndexPath:self.selectedItemIndexPath];
             
-            UIImageView *theHighlightedImageView = [[UIImageView alloc] initWithImage:theHighlightedImage];
-            theHighlightedImageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight; // Not using constraints, lets auto resizing mask be translated automatically...
+            self.currentView = [[UIView alloc] initWithFrame:collectionViewCell.frame];
             
-            UIView *theView = [[UIView alloc] initWithFrame:CGRectMake(CGRectGetMinX(theCollectionViewCell.frame), CGRectGetMinY(theCollectionViewCell.frame), CGRectGetWidth(theImageView.frame), CGRectGetHeight(theImageView.frame))];
+            collectionViewCell.highlighted = YES;
+            UIImageView *highlightedImageView = [[UIImageView alloc] initWithImage:[collectionViewCell LX_rasterizedImage]];
+            highlightedImageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+            highlightedImageView.alpha = 1.0f;
             
-            [theView addSubview:theImageView];
-            [theView addSubview:theHighlightedImageView];
+            collectionViewCell.highlighted = NO;
+            UIImageView *imageView = [[UIImageView alloc] initWithImage:[collectionViewCell LX_rasterizedImage]];
+            imageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+            imageView.alpha = 0.0f;
             
-            [self.collectionView addSubview:theView];
+            [self.currentView addSubview:imageView];
+            [self.currentView addSubview:highlightedImageView];
+            [self.collectionView addSubview:self.currentView];
             
-            self.selectedItemIndexPath = theIndexPathOfSelectedItem;
-            self.currentView = theView;
-            self.currentViewCenter = theView.center;
+            self.currentViewCenter = self.currentView.center;
             
-            theImageView.alpha = 0.0f;
-            theHighlightedImageView.alpha = 1.0f;
-            
-            [UIView
-             animateWithDuration:0.3
-             animations:^{
-                 theView.transform = CGAffineTransformMakeScale(1.1f, 1.1f);
-                 theImageView.alpha = 1.0f;
-                 theHighlightedImageView.alpha = 0.0f;
-             }
-             completion:^(BOOL finished) {
-                 [theHighlightedImageView removeFromSuperview];
+            __weak typeof(self)weakSelf = self;
+            [UIView animateWithDuration:0.3
+                                  delay:0.0
+                                options:UIViewAnimationOptionBeginFromCurrentState
+                             animations:^{
+                                 __strong typeof(weakSelf)strongSelf = weakSelf;
+                                 if (!strongSelf) {
+                                     return;
+                                 }
+                                 
+                                 strongSelf.currentView.transform = CGAffineTransformMakeScale(1.05f, 1.05f);
+                                 highlightedImageView.alpha = 0.0f;
+                                 imageView.alpha = 1.0f;
+                             }
+                             completion:^(BOOL finished) {
+                                 __strong typeof(weakSelf)strongSelf = weakSelf;
+                                 if (!strongSelf) {
+                                     return;
+                                 }
+                                 
+                                 [highlightedImageView removeFromSuperview];
                  
-                 if ([self.collectionView.delegate conformsToProtocol:@protocol(LXReorderableCollectionViewDelegateFlowLayout)]) {
-                     id<LXReorderableCollectionViewDelegateFlowLayout> theDelegate = (id<LXReorderableCollectionViewDelegateFlowLayout>)self.collectionView.delegate;
-                     if ([theDelegate respondsToSelector:@selector(collectionView:layout:didBeginReorderingAtIndexPath:)]) {
-                         [theDelegate collectionView:self.collectionView layout:self didBeginReorderingAtIndexPath:theIndexPathOfSelectedItem];
-                     }
-                 }
-             }];
+                                 if ([strongSelf.delegate respondsToSelector:@selector(collectionView:layout:didBeginDraggingItemAtIndexPath:)]) {
+                                     [strongSelf.delegate collectionView:strongSelf.collectionView layout:strongSelf didBeginDraggingItemAtIndexPath:strongSelf.selectedItemIndexPath];
+                                 }
+                             }];
             
             [self invalidateLayout];
         } break;
+        case UIGestureRecognizerStateCancelled:
         case UIGestureRecognizerStateEnded: {
-            NSIndexPath *theIndexPathOfSelectedItem = self.selectedItemIndexPath;
-            NSIndexPath *theIndexPathOfCatchItem = self.catchItemIndexPath;
+            NSIndexPath *previousIndexPath = self.selectedItemIndexPath;
+            NSIndexPath *newIndexPath = self.catchItemIndexPath;
             
-            if ([self.collectionView.delegate conformsToProtocol:@protocol(LXReorderableCollectionViewDelegateFlowLayout)]) {
-                id<LXReorderableCollectionViewDelegateFlowLayout> theDelegate = (id<LXReorderableCollectionViewDelegateFlowLayout>)self.collectionView.delegate;
-                if ([theDelegate respondsToSelector:@selector(collectionView:layout:willEndReorderingAtIndexPath:)]) {
-                    [theDelegate collectionView:self.collectionView layout:self willEndReorderingAtIndexPath:theIndexPathOfSelectedItem];
-                }
+            if (!previousIndexPath) {
+                [self resetCatchItemIfNeeded];
+                return ;
+            }
+            
+            if ([self.delegate respondsToSelector:@selector(collectionView:layout:willEndDraggingItemAtIndexPath:)]) {
+                [self.delegate collectionView:self.collectionView layout:self willEndDraggingItemAtIndexPath:previousIndexPath];
             }
             
             self.selectedItemIndexPath = nil;
             self.currentViewCenter = CGPointZero;
             
-            if ([self.collectionView.delegate conformsToProtocol:@protocol(LXReorderableCollectionViewDelegateFlowLayout)]) {
-                id<LXReorderableCollectionViewDelegateFlowLayout> theDelegate = (id<LXReorderableCollectionViewDelegateFlowLayout>)self.collectionView.delegate;
-                if (theIndexPathOfCatchItem) {
-                    if ([theDelegate respondsToSelector:@selector(collectionView:layout:willDropIndexPath:onIndexPath:)]) {
-                        [theDelegate collectionView:self.collectionView layout:self willDropIndexPath:theIndexPathOfSelectedItem onIndexPath:theIndexPathOfCatchItem];
-                    }
-                    [self.collectionView deselectItemAtIndexPath:theIndexPathOfCatchItem animated:YES];
-                    [self.collectionView
-                     performBatchUpdates:^{
-                         [self.collectionView deleteItemsAtIndexPaths:@[ theIndexPathOfSelectedItem ]];
-                         [self.collectionView reloadItemsAtIndexPaths:@[ theIndexPathOfCatchItem ]];
-                     }
-                     completion:^(BOOL theFinished) {
-                     }];
+            if (newIndexPath) {
+                if ([self.dataSource respondsToSelector:@selector(collectionView:willDropItemAtIndexPath:toIndexPath:)]) {
+                    [self.dataSource collectionView:self.collectionView willDropItemAtIndexPath:previousIndexPath toIndexPath:newIndexPath];
                 }
+                
+                __weak typeof(self)weakSelf = self;
+                [self.collectionView deselectItemAtIndexPath:newIndexPath animated:YES];
+                [self.collectionView performBatchUpdates:^{
+                    __strong typeof(weakSelf)strongSelf = weakSelf;
+                    if (!strongSelf) {
+                        return;
+                    }
+                    
+                    if ([strongSelf.dataSource respondsToSelector:@selector(collectionView:dropItemAtIndexPath:toIndexPath:)]) {
+                        [strongSelf.dataSource collectionView:strongSelf.collectionView dropItemAtIndexPath:previousIndexPath toIndexPath:newIndexPath];
+                    }
+                    
+                    [strongSelf.collectionView deleteItemsAtIndexPaths:@[ previousIndexPath ]];
+                    [strongSelf.collectionView insertItemsAtIndexPaths:@[ newIndexPath ]];
+                } completion:^(BOOL finished) {
+                    __strong typeof(weakSelf)strongSelf = weakSelf;
+                    if (!strongSelf) {
+                        return;
+                    }
+
+                    if ([strongSelf.dataSource respondsToSelector:@selector(collectionView:didDropItemAtIndexPath:toIndexPath:)]) {
+                        [strongSelf.dataSource collectionView:strongSelf.collectionView didDropItemAtIndexPath:previousIndexPath toIndexPath:newIndexPath];
+                    }
+                }];
             }
             
             UICollectionViewLayoutAttributes *theLayoutAttributes;
-            if (theIndexPathOfCatchItem) {
-                theLayoutAttributes = [self layoutAttributesForItemAtIndexPath:theIndexPathOfCatchItem];
+            if (newIndexPath) {
+                theLayoutAttributes = [self layoutAttributesForItemAtIndexPath:newIndexPath];
             } else {
-                theLayoutAttributes = [self layoutAttributesForItemAtIndexPath:theIndexPathOfSelectedItem];
+                theLayoutAttributes = [self layoutAttributesForItemAtIndexPath:previousIndexPath];
             }
             
-            __weak LXReorderableCollectionViewFlowLayout *theWeakSelf = self;
-            [UIView
-             animateWithDuration:0.3f
-             animations:^{
-                 __strong LXReorderableCollectionViewFlowLayout *theStrongSelf = theWeakSelf;
-                 
-                 if (theIndexPathOfCatchItem) {
-                     theStrongSelf.currentView.transform = CGAffineTransformMakeScale(0.01f, 0.01f);
-                     theStrongSelf.currentView.center = theLayoutAttributes.center;
-                 } else {
-                     theStrongSelf.currentView.transform = CGAffineTransformMakeScale(1.0f, 1.0f);
-                     theStrongSelf.currentView.center = theLayoutAttributes.center;
-                 }
-             }
-             completion:^(BOOL finished) {
-                 __strong LXReorderableCollectionViewFlowLayout *theStrongSelf = theWeakSelf;
-                 
-                 [theStrongSelf.currentView removeFromSuperview];
-                 [theStrongSelf invalidateLayout];
-                 
-                 if ([self.collectionView.delegate conformsToProtocol:@protocol(LXReorderableCollectionViewDelegateFlowLayout)]) {
-                     id<LXReorderableCollectionViewDelegateFlowLayout> theDelegate = (id<LXReorderableCollectionViewDelegateFlowLayout>)self.collectionView.delegate;
-                     if ([theDelegate respondsToSelector:@selector(collectionView:layout:didEndReorderingAtIndexPath:)]) {
-                         [theDelegate collectionView:self.collectionView layout:self didEndReorderingAtIndexPath:theIndexPathOfSelectedItem];
-                     }
-                 }
-             }];
-            
+            __weak typeof(self)weakSelf = self;
+            [UIView animateWithDuration:0.3
+                                  delay:0.0
+                                options:UIViewAnimationOptionBeginFromCurrentState
+                             animations:^{
+                                 __strong typeof(weakSelf)strongSelf = weakSelf;
+                                 if (!strongSelf) {
+                                     return;
+                                 }
+                                 
+                                 if (newIndexPath) {
+                                     strongSelf.currentView.transform = CGAffineTransformMakeScale(0.01f, 0.01f);
+                                     strongSelf.currentView.center = theLayoutAttributes.center;
+                                 } else {
+                                     strongSelf.currentView.transform = CGAffineTransformMakeScale(1.0f, 1.0f);
+                                     strongSelf.currentView.center = theLayoutAttributes.center;
+                                 }
+                             }
+                             completion:^(BOOL finished) {
+                                 __strong typeof(weakSelf)strongSelf = weakSelf;
+                                 if (!strongSelf) {
+                                     return;
+                                 }
+                                 
+                                 [strongSelf.currentView removeFromSuperview];
+                                 strongSelf.currentView = nil;
+                                 [strongSelf invalidateLayout];
+                                 
+                                 if ([strongSelf.delegate respondsToSelector:@selector(collectionView:layout:didEndDraggingItemAtIndexPath:)]) {
+                                     [strongSelf.delegate collectionView:strongSelf.collectionView layout:strongSelf didEndDraggingItemAtIndexPath:previousIndexPath];
+                                 }
+                             }];
+
             [self resetCatchItemIfNeeded];
         } break;
-        default: {
-        } break;
+            
+        default: break;
     }
 }
 
-- (void)handlePanGesture:(UIPanGestureRecognizer *)thePanGestureRecognizer {
-    switch (thePanGestureRecognizer.state) {
+- (void)handlePanGesture:(UIPanGestureRecognizer *)gestureRecognizer {
+    switch (gestureRecognizer.state) {
         case UIGestureRecognizerStateBegan:
         case UIGestureRecognizerStateChanged: {
-            CGPoint theTranslationInCollectionView = [thePanGestureRecognizer translationInView:self.collectionView];
-            self.panTranslationInCollectionView = theTranslationInCollectionView;
-            CGPoint theLocationInCollectionView = LXS_CGPointAdd(self.currentViewCenter, self.panTranslationInCollectionView);
-            self.currentView.center = theLocationInCollectionView;
+            self.panTranslationInCollectionView = [gestureRecognizer translationInView:self.collectionView];
+            CGPoint viewCenter = self.currentView.center = LXS_CGPointAdd(self.currentViewCenter, self.panTranslationInCollectionView);
             
-            if (self.invalidateLayoutTimer) {
-                [self.invalidateLayoutTimer invalidate];
-                self.invalidateLayoutTimer = nil;
-            }
-            self.invalidateLayoutTimer = [NSTimer scheduledTimerWithTimeInterval:0.1f target:self selector:@selector(invalidateLayoutIfNecessary) userInfo:nil repeats:NO];
+            [self invalidateLayoutIfNecessary];
             
             switch (self.scrollDirection) {
                 case UICollectionViewScrollDirectionVertical: {
-                    if (theLocationInCollectionView.y < (CGRectGetMinY(self.collectionView.bounds) + self.triggerScrollingEdgeInsets.top)) {
-                        BOOL isScrollingTimerSetUpNeeded = YES;
-                        if (self.scrollingTimer) {
-                            if (self.scrollingTimer.isValid) {
-                                isScrollingTimerSetUpNeeded = ([self.scrollingTimer.userInfo[kLXReorderableCollectionViewFlowLayoutScrollingDirectionKey] integerValue] != LXReorderableCollectionViewFlowLayoutScrollingDirectionUp);
-                            }
-                        }
-                        if (isScrollingTimerSetUpNeeded) {
-                            if (self.scrollingTimer) {
-                                [self.scrollingTimer invalidate];
-                                self.scrollingTimer = nil;
-                            }
-                            self.scrollingTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 / LX_FRAMES_PER_SECOND
-                                                                                   target:self
-                                                                                 selector:@selector(handleScroll:)
-                                                                                 userInfo:@{ kLXReorderableCollectionViewFlowLayoutScrollingDirectionKey : @( LXReorderableCollectionViewFlowLayoutScrollingDirectionUp ) }
-                                                                                  repeats:YES];
-                        }
-                    } else if (theLocationInCollectionView.y > (CGRectGetMaxY(self.collectionView.bounds) - self.triggerScrollingEdgeInsets.bottom)) {
-                        BOOL isScrollingTimerSetUpNeeded = YES;
-                        if (self.scrollingTimer) {
-                            if (self.scrollingTimer.isValid) {
-                                isScrollingTimerSetUpNeeded = ([self.scrollingTimer.userInfo[kLXReorderableCollectionViewFlowLayoutScrollingDirectionKey] integerValue] != LXReorderableCollectionViewFlowLayoutScrollingDirectionDown);
-                            }
-                        }
-                        if (isScrollingTimerSetUpNeeded) {
-                            if (self.scrollingTimer) {
-                                [self.scrollingTimer invalidate];
-                                self.scrollingTimer = nil;
-                            }
-                            self.scrollingTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 / LX_FRAMES_PER_SECOND
-                                                                                   target:self
-                                                                                 selector:@selector(handleScroll:)
-                                                                                 userInfo:@{ kLXReorderableCollectionViewFlowLayoutScrollingDirectionKey : @( LXReorderableCollectionViewFlowLayoutScrollingDirectionDown ) }
-                                                                                  repeats:YES];
-                        }
+                    if (viewCenter.y < (CGRectGetMinY(self.collectionView.bounds) + self.scrollingTriggerEdgeInsets.top)) {
+                        [self setupScrollTimerInDirection:LXScrollingDirectionUp];
                     } else {
-                        if (self.scrollingTimer) {
-                            [self.scrollingTimer invalidate];
-                            self.scrollingTimer = nil;
+                        if (viewCenter.y > (CGRectGetMaxY(self.collectionView.bounds) - self.scrollingTriggerEdgeInsets.bottom)) {
+                            [self setupScrollTimerInDirection:LXScrollingDirectionDown];
+                        } else {
+                            [self invalidatesScrollTimer];
                         }
                     }
                 } break;
                 case UICollectionViewScrollDirectionHorizontal: {
-                    if (theLocationInCollectionView.x < (CGRectGetMinX(self.collectionView.bounds) + self.triggerScrollingEdgeInsets.left)) {
-                        BOOL isScrollingTimerSetUpNeeded = YES;
-                        if (self.scrollingTimer) {
-                            if (self.scrollingTimer.isValid) {
-                                isScrollingTimerSetUpNeeded = ([self.scrollingTimer.userInfo[kLXReorderableCollectionViewFlowLayoutScrollingDirectionKey] integerValue] != LXReorderableCollectionViewFlowLayoutScrollingDirectionLeft);
-                            }
-                        }
-                        if (isScrollingTimerSetUpNeeded) {
-                            if (self.scrollingTimer) {
-                                [self.scrollingTimer invalidate];
-                                self.scrollingTimer = nil;
-                            }
-                            self.scrollingTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 / LX_FRAMES_PER_SECOND
-                                                                                   target:self
-                                                                                 selector:@selector(handleScroll:)
-                                                                                 userInfo:@{ kLXReorderableCollectionViewFlowLayoutScrollingDirectionKey : @( LXReorderableCollectionViewFlowLayoutScrollingDirectionLeft ) }
-                                                                                  repeats:YES];
-                        }
-                    } else if (theLocationInCollectionView.x > (CGRectGetMaxX(self.collectionView.bounds) - self.triggerScrollingEdgeInsets.right)) {
-                        BOOL isScrollingTimerSetUpNeeded = YES;
-                        if (self.scrollingTimer) {
-                            if (self.scrollingTimer.isValid) {
-                                isScrollingTimerSetUpNeeded = ([self.scrollingTimer.userInfo[kLXReorderableCollectionViewFlowLayoutScrollingDirectionKey] integerValue] != LXReorderableCollectionViewFlowLayoutScrollingDirectionRight);
-                            }
-                        }
-                        if (isScrollingTimerSetUpNeeded) {
-                            if (self.scrollingTimer) {
-                                [self.scrollingTimer invalidate];
-                                self.scrollingTimer = nil;
-                            }
-                            self.scrollingTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 / LX_FRAMES_PER_SECOND
-                                                                                   target:self
-                                                                                 selector:@selector(handleScroll:)
-                                                                                 userInfo:@{ kLXReorderableCollectionViewFlowLayoutScrollingDirectionKey : @( LXReorderableCollectionViewFlowLayoutScrollingDirectionRight ) }
-                                                                                  repeats:YES];
-                        }
+                    if (viewCenter.x < (CGRectGetMinX(self.collectionView.bounds) + self.scrollingTriggerEdgeInsets.left)) {
+                        [self setupScrollTimerInDirection:LXScrollingDirectionLeft];
                     } else {
-                        if (self.scrollingTimer) {
-                            [self.scrollingTimer invalidate];
-                            self.scrollingTimer = nil;
+                        if (viewCenter.x > (CGRectGetMaxX(self.collectionView.bounds) - self.scrollingTriggerEdgeInsets.right)) {
+                            [self setupScrollTimerInDirection:LXScrollingDirectionRight];
+                        } else {
+                            [self invalidatesScrollTimer];
                         }
                     }
                 } break;
             }
         } break;
+        case UIGestureRecognizerStateCancelled:
         case UIGestureRecognizerStateEnded: {
-            if (self.invalidateLayoutTimer) {
-                [self.invalidateLayoutTimer invalidate];
-                self.invalidateLayoutTimer = nil;
-            }
-            if (self.scrollingTimer) {
-                [self.scrollingTimer invalidate];
-                self.scrollingTimer = nil;
-            }
+            [self invalidatesScrollTimer];
         } break;
         default: {
+            // Do nothing...
         } break;
     }
 }
 
-#pragma mark - UICollectionViewFlowLayoutDelegate methods
+#pragma mark - UICollectionViewLayout overridden methods
 
-- (NSArray *)layoutAttributesForElementsInRect:(CGRect)theRect {
-    NSArray *theLayoutAttributesForElementsInRect = [super layoutAttributesForElementsInRect:theRect];
+- (NSArray *)layoutAttributesForElementsInRect:(CGRect)rect {
+    NSArray *layoutAttributesForElementsInRect = [super layoutAttributesForElementsInRect:rect];
     
-    for (UICollectionViewLayoutAttributes *theLayoutAttributes in theLayoutAttributesForElementsInRect) {
-        switch (theLayoutAttributes.representedElementCategory) {
+    for (UICollectionViewLayoutAttributes *layoutAttributes in layoutAttributesForElementsInRect) {
+        switch (layoutAttributes.representedElementCategory) {
             case UICollectionElementCategoryCell: {
-                [self applyLayoutAttributes:theLayoutAttributes];
+                [self applyLayoutAttributes:layoutAttributes];
             } break;
             default: {
+                // Do nothing...
             } break;
         }
     }
     
-    return theLayoutAttributesForElementsInRect;
+    return layoutAttributesForElementsInRect;
 }
 
-- (UICollectionViewLayoutAttributes *)layoutAttributesForItemAtIndexPath:(NSIndexPath *)theIndexPath {
-    UICollectionViewLayoutAttributes *theLayoutAttributes = [super layoutAttributesForItemAtIndexPath:theIndexPath];
+- (UICollectionViewLayoutAttributes *)layoutAttributesForItemAtIndexPath:(NSIndexPath *)indexPath {
+    UICollectionViewLayoutAttributes *layoutAttributes = [super layoutAttributesForItemAtIndexPath:indexPath];
     
-    switch (theLayoutAttributes.representedElementCategory) {
+    switch (layoutAttributes.representedElementCategory) {
         case UICollectionElementCategoryCell: {
-            [self applyLayoutAttributes:theLayoutAttributes];
+            [self applyLayoutAttributes:layoutAttributes];
         } break;
         default: {
+            // Do nothing...
         } break;
     }
     
-    return theLayoutAttributes;
-    
-}
-
-- (CGSize)collectionViewContentSize {
-    CGSize theCollectionViewContentSize = [super collectionViewContentSize];
-    if (self.alwaysScroll) {
-        switch (self.scrollDirection) {
-            case UICollectionViewScrollDirectionVertical: {
-                if (theCollectionViewContentSize.height <= CGRectGetHeight(self.collectionView.bounds)) {
-                    theCollectionViewContentSize.height = CGRectGetHeight(self.collectionView.bounds) + 1.0f;
-                }
-            } break;
-            case UICollectionViewScrollDirectionHorizontal: {
-                if (theCollectionViewContentSize.width <= CGRectGetWidth(self.collectionView.bounds)) {
-                    theCollectionViewContentSize.width = CGRectGetWidth(self.collectionView.bounds) + 1.0f;
-                }
-            } break;
-        }
-    }
-    return theCollectionViewContentSize;
+    return layoutAttributes;
 }
 
 #pragma mark - UIGestureRecognizerDelegate methods
 
-- (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)theGestureRecognizer {
-    if ([self.panGestureRecognizer isEqual:theGestureRecognizer]) {
+- (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer {
+    if ([self.panGestureRecognizer isEqual:gestureRecognizer]) {
         return (self.selectedItemIndexPath != nil);
     }
     return YES;
 }
 
-- (BOOL)gestureRecognizer:(UIGestureRecognizer *)theGestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)theOtherGestureRecognizer {
-    if ([self.longPressGestureRecognizer isEqual:theGestureRecognizer]) {
-        if ([self.panGestureRecognizer isEqual:theOtherGestureRecognizer]) {
-            return YES;
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
+    if ([self.longPressGestureRecognizer isEqual:gestureRecognizer]) {
+        return [self.panGestureRecognizer isEqual:otherGestureRecognizer];
+    }
+    
+    if ([self.panGestureRecognizer isEqual:gestureRecognizer]) {
+        return [self.longPressGestureRecognizer isEqual:otherGestureRecognizer];
+    }
+    
+    return NO;
+}
+
+#pragma mark - Key-Value Observing methods
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
+    if ([keyPath isEqualToString:kLXCollectionViewKeyPath]) {
+        if (self.collectionView != nil) {
+            [self setupCollectionView];
         } else {
-            return NO;
-        }
-    } else if ([self.panGestureRecognizer isEqual:theGestureRecognizer]) {
-        if ([self.longPressGestureRecognizer isEqual:theOtherGestureRecognizer]) {
-            return YES;
-        } else {
-            return NO;
+            [self invalidatesScrollTimer];
         }
     }
-    return NO;
+}
+
+#pragma mark - Notifications
+
+- (void)handleApplicationWillResignActive:(NSNotification *)notification {
+    self.panGestureRecognizer.enabled = NO;
+    self.panGestureRecognizer.enabled = YES;
+}
+
+#pragma mark - Depreciated methods
+
+#pragma mark Starting from 0.1.0
+- (void)setUpGestureRecognizersOnCollectionView {
+    // Do nothing...
 }
 
 @end

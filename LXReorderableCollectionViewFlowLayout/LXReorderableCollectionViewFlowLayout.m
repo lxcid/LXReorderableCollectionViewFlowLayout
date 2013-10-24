@@ -67,7 +67,7 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 
 @property (strong, nonatomic) NSIndexPath *selectedItemIndexPath;
 @property (strong, nonatomic) NSIndexPath *catchItemIndexPath;
-@property (strong, nonatomic) UIView *currentView;
+@property (strong, nonatomic) UIImageView *currentView;
 @property (assign, nonatomic) CGPoint currentViewCenter;
 @property (assign, nonatomic) CGPoint panTranslationInCollectionView;
 @property (strong, nonatomic) CADisplayLink *displayLink;
@@ -225,7 +225,7 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
     CGRect theFrame = theLayoutAttributesOfSelectedItem.frame;
     CGRect intersectionFrame = CGRectIntersection(self.currentView.frame, theFrame);
     
-    if (intersectionFrame.size.height > theFrame.size.height/2 && intersectionFrame.size.width > theFrame.size.width/2) {
+    if (intersectionFrame.size.height > theFrame.size.height/2 || intersectionFrame.size.width > theFrame.size.width/2) {
         [self dropCurrentItemOnIndexPath:newIndePath];
     } else {
         [self moveCurrentItemToIndexPath:newIndePath];
@@ -343,20 +343,15 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
             
             UICollectionViewCell *collectionViewCell = [self.collectionView cellForItemAtIndexPath:self.selectedItemIndexPath];
             
-            self.currentView = [[UIView alloc] initWithFrame:collectionViewCell.frame];
+            self.currentView = [[UIImageView alloc] initWithFrame:collectionViewCell.frame];
             
             collectionViewCell.highlighted = YES;
-            UIImageView *highlightedImageView = [[UIImageView alloc] initWithImage:[collectionViewCell LX_rasterizedImage]];
-            highlightedImageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-            highlightedImageView.alpha = 1.0f;
+            self.currentView.highlightedImage = [collectionViewCell LX_rasterizedImage];
             
             collectionViewCell.highlighted = NO;
-            UIImageView *imageView = [[UIImageView alloc] initWithImage:[collectionViewCell LX_rasterizedImage]];
-            imageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-            imageView.alpha = 0.0f;
+            self.currentView.image = [collectionViewCell LX_rasterizedImage];
             
-            [self.currentView addSubview:imageView];
-            [self.currentView addSubview:highlightedImageView];
+            self.currentView.highlighted = YES;
             [self.collectionView addSubview:self.currentView];
             
             self.currentViewCenter = self.currentView.center;
@@ -372,8 +367,7 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
                                  }
                                  
                                  strongSelf.currentView.transform = CGAffineTransformMakeScale(1.05f, 1.05f);
-                                 highlightedImageView.alpha = 0.0f;
-                                 imageView.alpha = 1.0f;
+                                 strongSelf.currentView.highlighted = NO;
                              }
                              completion:^(BOOL finished) {
                                  __strong typeof(weakSelf)strongSelf = weakSelf;
@@ -381,8 +375,6 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
                                      return;
                                  }
                                  
-                                 [highlightedImageView removeFromSuperview];
-                 
                                  if ([strongSelf.delegate respondsToSelector:@selector(collectionView:layout:didBeginDraggingItemAtIndexPath:)]) {
                                      [strongSelf.delegate collectionView:strongSelf.collectionView layout:strongSelf didBeginDraggingItemAtIndexPath:strongSelf.selectedItemIndexPath];
                                  }

@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="2.0" toolsVersion="2843" systemVersion="11E53" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES" initialViewController="wfC-9f-vtC">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="2.0" toolsVersion="4510" systemVersion="12F45" targetRuntime="iOS.CocoaTouch.iPad" variant="6xAndEarlier" propertyAccessControl="none" initialViewController="wfC-9f-vtC">
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="1929"/>
+        <deployment defaultVersion="1536" identifier="iOS"/>
+        <development version="4600" identifier="xcode"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="3742"/>
     </dependencies>
     <scenes>
         <!--Collection View Controller-->
@@ -25,16 +27,13 @@
                                     <rect key="frame" x="0.0" y="0.0" width="160" height="240"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
-                                        <imageView userInteractionEnabled="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="x0y-b3-mNF"/>
+                                        <imageView userInteractionEnabled="NO" contentMode="scaleToFill" id="x0y-b3-mNF">
+                                            <rect key="frame" x="0.0" y="0.0" width="160" height="240"/>
+                                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                        </imageView>
                                     </subviews>
                                     <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                                 </view>
-                                <constraints>
-                                    <constraint firstItem="x0y-b3-mNF" firstAttribute="trailing" secondItem="hHT-aZ-3Ej" secondAttribute="trailing" type="default" id="HYf-sM-LHw"/>
-                                    <constraint firstItem="x0y-b3-mNF" firstAttribute="bottom" secondItem="hHT-aZ-3Ej" secondAttribute="bottom" type="default" id="T6A-Kd-jNt"/>
-                                    <constraint firstItem="x0y-b3-mNF" firstAttribute="leading" secondItem="hHT-aZ-3Ej" secondAttribute="leading" type="default" id="Xfi-lP-pht"/>
-                                    <constraint firstItem="x0y-b3-mNF" firstAttribute="top" secondItem="hHT-aZ-3Ej" secondAttribute="top" type="default" id="kCg-O3-Z9J"/>
-                                </constraints>
                                 <connections>
                                     <outlet property="playingCardImageView" destination="x0y-b3-mNF" id="yUs-MF-rlD"/>
                                 </connections>
@@ -51,38 +50,6 @@
             <point key="canvasLocation" x="-230" y="0.0"/>
         </scene>
     </scenes>
-    <classes>
-        <class className="LXCollectionViewController" superclassName="UICollectionViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/LXCollectionViewController.h"/>
-        </class>
-        <class className="LXReorderableCollectionViewFlowLayout" superclassName="UICollectionViewFlowLayout">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/LXReorderableCollectionViewFlowLayout.h"/>
-        </class>
-        <class className="NSLayoutConstraint" superclassName="NSObject">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/NSLayoutConstraint.h"/>
-        </class>
-        <class className="PlayingCardCell" superclassName="UICollectionViewCell">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/PlayingCardCell.h"/>
-            <relationships>
-                <relationship kind="outlet" name="playingCardImageView" candidateClass="UIImageView"/>
-            </relationships>
-        </class>
-        <class className="UICollectionReusableView" superclassName="UIView">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/UICollectionReusableView.h"/>
-        </class>
-        <class className="UICollectionViewCell" superclassName="UICollectionReusableView">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/UICollectionViewCell.h"/>
-        </class>
-        <class className="UICollectionViewController" superclassName="UIViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/UICollectionViewController.h"/>
-        </class>
-        <class className="UICollectionViewFlowLayout" superclassName="UICollectionViewLayout">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/UICollectionViewFlowLayout.h"/>
-        </class>
-        <class className="UICollectionViewLayout" superclassName="NSObject">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/UICollectionViewLayout.h"/>
-        </class>
-    </classes>
     <simulatedMetricsContainer key="defaultSimulatedMetrics">
         <simulatedStatusBarMetrics key="statusBar" statusBarStyle="blackTranslucent"/>
         <simulatedOrientationMetrics key="orientation"/>

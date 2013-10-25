@@ -110,7 +110,7 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 
 - (id)init {
     self = [super init];
-    if (self) {
+    if (self){
         [self setDefaults];
         [self addObserver:self forKeyPath:kLXCollectionViewKeyPath options:NSKeyValueObservingOptionNew context:nil];
     }
@@ -119,7 +119,7 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 
 - (id)initWithCoder:(NSCoder *)aDecoder {
     self = [super initWithCoder:aDecoder];
-    if (self) {
+    if (self){
         [self setDefaults];
         [self addObserver:self forKeyPath:kLXCollectionViewKeyPath options:NSKeyValueObservingOptionNew context:nil];
     }
@@ -199,8 +199,12 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 }
 
 - (void)dropCurrentItemOnIndexPath:(NSIndexPath *)newIndexPath {
-    if ((newIndexPath == nil) || [newIndexPath isEqual:self.selectedItemIndexPath] || [newIndexPath isEqual:self.catchItemIndexPath]) {
+    if ((newIndexPath == nil) || [newIndexPath isEqual:self.selectedItemIndexPath]) {
         [self resetCatchItemIfNeeded];
+        return;
+    }
+    
+    if ([newIndexPath isEqual:self.catchItemIndexPath]) {
         return;
     }
     
@@ -223,12 +227,22 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
     
     UICollectionViewLayoutAttributes *theLayoutAttributesOfSelectedItem = [self layoutAttributesForItemAtIndexPath:newIndePath];
     CGRect theFrame = theLayoutAttributesOfSelectedItem.frame;
-    CGRect intersectionFrame = CGRectIntersection(self.currentView.frame, theFrame);
+    CGRect theLeftFrame, theRightFrame;
+    //    CGRectDivide(theFrame, &theLeftFrame, &theRightFrame, CGRectGetWidth(theFrame) / 2.0f, CGRectMinXEdge);
+    CGRectDivide(theFrame, &theLeftFrame, &theRightFrame, CGRectGetHeight(theFrame) / 2.0f, CGRectMinYEdge);
     
-    if (intersectionFrame.size.height > theFrame.size.height/2 || intersectionFrame.size.width > theFrame.size.width/2) {
-        [self dropCurrentItemOnIndexPath:newIndePath];
-    } else {
-        [self moveCurrentItemToIndexPath:newIndePath];
+    if (CGRectContainsPoint(theLeftFrame, theCurrentViewCenter)) {
+        if (self.selectedItemIndexPath.item > newIndePath.item) {
+            [self moveCurrentItemToIndexPath:newIndePath];
+        } else {
+            [self dropCurrentItemOnIndexPath:newIndePath];
+        }
+    } else if (CGRectContainsPoint(theRightFrame, theCurrentViewCenter)) {
+        if (self.selectedItemIndexPath.item < newIndePath.item) {
+            [self moveCurrentItemToIndexPath:newIndePath];
+        } else {
+            [self dropCurrentItemOnIndexPath:newIndePath];
+        }
     }
 }
 

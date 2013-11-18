@@ -213,7 +213,9 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
     CGSize frameSize = self.collectionView.bounds.size;
     CGSize contentSize = self.collectionView.contentSize;
     CGPoint contentOffset = self.collectionView.contentOffset;
-    CGFloat distance = self.scrollingSpeed / LX_FRAMES_PER_SECOND;
+    // Important to have an integer `distance` as the `contentOffset` property automatically gets rounded
+    // and it would diverge from the view's center resulting in a "cell is slipping away under finger"-bug.
+    CGFloat distance = rint(self.scrollingSpeed / LX_FRAMES_PER_SECOND);
     CGPoint translation = CGPointZero;
     
     switch(direction) {

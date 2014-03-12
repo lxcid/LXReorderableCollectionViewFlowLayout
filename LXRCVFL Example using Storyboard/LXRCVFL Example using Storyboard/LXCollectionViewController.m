@@ -16,11 +16,17 @@
 
 #define LX_LIMITED_MOVEMENT 0
 
+// LX_CUSTOM_ADJUSTMENT_FOR_DRAGDROP_VISUAL:
+// 0 = Use default visual adjustments
+// 1 = Use delegate methods to control visual adjustments
+
+#define LX_CUSTOM_ADJUSTMENT_FOR_DRAGDROP_VISUAL 0
+
 @implementation LXCollectionViewController
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    
+
     self.deck = [self constructsDeck];
 }
 
@@ -137,5 +143,18 @@
 - (void)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout didEndDraggingItemAtIndexPath:(NSIndexPath *)indexPath {
      NSLog(@"did end drag");
 }
+
+#if LX_CUSTOM_ADJUSTMENT_FOR_DRAGDROP_VISUAL == 1
+
+- (void)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout adjustCurrentViewForDragAnimated:(UIView *)currentView {
+    currentView.alpha = 0.8;
+    currentView.transform = CGAffineTransformRotate(CGAffineTransformMakeScale(1.2, 1.2), M_PI_4);
+}
+
+- (void)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout adjustCurrentViewForDropAnimated:(UIView *)currentView {
+    currentView.alpha = 1.0;
+}
+
+#endif
 
 @end

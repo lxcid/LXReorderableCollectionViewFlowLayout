@@ -312,7 +312,11 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
              animations:^{
                  __strong typeof(self) strongSelf = weakSelf;
                  if (strongSelf) {
-                     strongSelf.currentView.transform = CGAffineTransformMakeScale(1.1f, 1.1f);
+                     if ([strongSelf.delegate respondsToSelector:@selector(collectionView:layout:adjustCurrentViewForDragAnimated:)]) {
+                         [strongSelf.delegate collectionView:strongSelf.collectionView layout:strongSelf adjustCurrentViewForDragAnimated:strongSelf.currentView];
+                     } else {
+                         strongSelf.currentView.transform = CGAffineTransformMakeScale(1.1f, 1.1f);
+                     }
                      highlightedImageView.alpha = 0.0f;
                      imageView.alpha = 1.0f;
                  }
@@ -352,6 +356,9 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
                  animations:^{
                      __strong typeof(self) strongSelf = weakSelf;
                      if (strongSelf) {
+                         if ([strongSelf.delegate respondsToSelector:@selector(collectionView:layout:adjustCurrentViewForDropAnimated:)]) {
+                             [strongSelf.delegate collectionView:strongSelf.collectionView layout:strongSelf adjustCurrentViewForDropAnimated:strongSelf.currentView];
+                         }
                          strongSelf.currentView.transform = CGAffineTransformMakeScale(1.0f, 1.0f);
                          strongSelf.currentView.center = layoutAttributes.center;
                      }

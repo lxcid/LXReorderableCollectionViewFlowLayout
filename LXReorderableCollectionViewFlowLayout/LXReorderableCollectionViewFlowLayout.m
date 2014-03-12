@@ -387,8 +387,21 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
         case UIGestureRecognizerStateBegan:
         case UIGestureRecognizerStateChanged: {
             self.panTranslationInCollectionView = [gestureRecognizer translationInView:self.collectionView];
-            CGPoint viewCenter = self.currentView.center = LXS_CGPointAdd(self.currentViewCenter, self.panTranslationInCollectionView);
-            
+
+            CGPoint directionalTranslation = self.panTranslationInCollectionView;
+            if (self.lockPanningToScrollDirection) {
+                switch (self.scrollDirection) {
+                    case UICollectionViewScrollDirectionVertical:
+                        directionalTranslation.x = 0;
+                        break;
+                    case UICollectionViewScrollDirectionHorizontal:
+                        directionalTranslation.y = 0;
+                        break;
+                }
+            }
+            self.currentView.center = LXS_CGPointAdd(self.currentViewCenter, directionalTranslation);
+
+            CGPoint viewCenter = self.currentView.center;
             [self invalidateLayoutIfNecessary];
             
             switch (self.scrollDirection) {

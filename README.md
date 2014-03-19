@@ -22,7 +22,7 @@ Getting Started
  1. Install using *CocoaPods* or drag the `LXReorderableCollectionViewFlowLayout` folder into your project.
  2. Initialize/Setup your collection view to use `LXReorderableCollectionViewFlowLayout`.
 
- 3. The collection view controller that is to support reordering capability must conforms to `LXReorderableCollectionViewDatasource` protocol. For example,
+ 3. The collection view controller that is to support reordering capability must conforms to `LXReorderableCollectionViewDataSource` protocol. For example,
 
         - (void)collectionView:(UICollectionView *)collectionView itemAtIndexPath:(NSIndexPath *)fromIndexPath willMoveToIndexPath:(NSIndexPath *)toIndexPath {
             id object = [mutableArray objectAtIndex:fromIndexPath.item];

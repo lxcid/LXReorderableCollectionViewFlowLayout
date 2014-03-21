@@ -225,7 +225,7 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
         case LXScrollingDirectionUp: {
             distance = -distance;
             CGFloat minY = 0.0f - contentInset.top;
-            
+
             if ((contentOffset.y + distance) <= minY) {
                 distance = -contentOffset.y - contentInset.top;
             }
@@ -315,7 +315,11 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
              animations:^{
                  __strong typeof(self) strongSelf = weakSelf;
                  if (strongSelf) {
-                     strongSelf.currentView.transform = CGAffineTransformMakeScale(1.1f, 1.1f);
+                     if ([strongSelf.delegate respondsToSelector:@selector(collectionView:layout:adjustCurrentViewForDragAnimated:)]) {
+                         [strongSelf.delegate collectionView:strongSelf.collectionView layout:strongSelf adjustCurrentViewForDragAnimated:strongSelf.currentView];
+                     } else {
+                         strongSelf.currentView.transform = CGAffineTransformMakeScale(1.1f, 1.1f);
+                     }
                      highlightedImageView.alpha = 0.0f;
                      imageView.alpha = 1.0f;
                  }
@@ -355,6 +359,9 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
                  animations:^{
                      __strong typeof(self) strongSelf = weakSelf;
                      if (strongSelf) {
+                         if ([strongSelf.delegate respondsToSelector:@selector(collectionView:layout:adjustCurrentViewForDropAnimated:)]) {
+                             [strongSelf.delegate collectionView:strongSelf.collectionView layout:strongSelf adjustCurrentViewForDropAnimated:strongSelf.currentView];
+                         }
                          strongSelf.currentView.transform = CGAffineTransformMakeScale(1.0f, 1.0f);
                          strongSelf.currentView.center = layoutAttributes.center;
                      }
@@ -382,9 +389,14 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
     switch (gestureRecognizer.state) {
         case UIGestureRecognizerStateBegan:
         case UIGestureRecognizerStateChanged: {
-            self.panTranslationInCollectionView = [gestureRecognizer translationInView:self.collectionView];
-            CGPoint viewCenter = self.currentView.center = LXS_CGPointAdd(self.currentViewCenter, self.panTranslationInCollectionView);
-            
+            CGPoint directionalTranslation = [gestureRecognizer translationInView:self.collectionView];
+            if ([self.delegate respondsToSelector:@selector(collectionView:layout:adjustTranslation:forDragOfCurrentView:)]) {
+                directionalTranslation = [self.delegate collectionView:self.collectionView layout:self adjustTranslation:directionalTranslation forDragOfCurrentView:self.currentView];
+            }
+            self.panTranslationInCollectionView = directionalTranslation;
+            self.currentView.center = LXS_CGPointAdd(self.currentViewCenter, directionalTranslation);
+
+            CGPoint viewCenter = self.currentView.center;
             [self invalidateLayoutIfNecessary];
             
             switch (self.scrollDirection) {

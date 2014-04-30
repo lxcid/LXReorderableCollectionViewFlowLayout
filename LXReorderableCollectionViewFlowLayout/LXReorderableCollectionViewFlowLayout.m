@@ -266,6 +266,7 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
     self.currentViewCenter = LXS_CGPointAdd(self.currentViewCenter, translation);
     self.currentView.center = LXS_CGPointAdd(self.currentViewCenter, self.panTranslationInCollectionView);
     self.collectionView.contentOffset = LXS_CGPointAdd(contentOffset, translation);
+    [self invalidateLayoutIfNecessary];
 }
 
 

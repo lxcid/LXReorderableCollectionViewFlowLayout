@@ -345,6 +345,8 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
                 
                 UICollectionViewLayoutAttributes *layoutAttributes = [self layoutAttributesForItemAtIndexPath:currentIndexPath];
                 
+                self.longPressGestureRecognizer.enabled = NO;
+                
                 __weak typeof(self) weakSelf = self;
                 [UIView
                  animateWithDuration:0.3
@@ -358,6 +360,9 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
                      }
                  }
                  completion:^(BOOL finished) {
+                     
+                     self.longPressGestureRecognizer.enabled = YES;
+                     
                      __strong typeof(self) strongSelf = weakSelf;
                      if (strongSelf) {
                          [strongSelf.currentView removeFromSuperview];

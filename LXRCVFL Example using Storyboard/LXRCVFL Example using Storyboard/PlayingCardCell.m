@@ -10,16 +10,15 @@
 #import "PlayingCard.h"
 
 @implementation PlayingCardCell
-@synthesize playingCard;
 
-- (void)setPlayingCard:(PlayingCard *)thePlayingCard
-{
-    playingCard = thePlayingCard;
-    self.playingCardImageView.image = [UIImage imageNamed:playingCard.imageName];
+@synthesize playingCard = _playingCard;
+
+- (void)setPlayingCard:(PlayingCard *)playingCard {
+    _playingCard = playingCard;
+    self.playingCardImageView.image = [UIImage imageNamed:_playingCard.imageName];
 }
 
-- (void)setHighlighted:(BOOL)highlighted
-{
+- (void)setHighlighted:(BOOL)highlighted {
     [super setHighlighted:highlighted];
     self.playingCardImageView.alpha = highlighted ? 0.75f : 1.0f;
 }

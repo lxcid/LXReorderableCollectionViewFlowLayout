@@ -71,7 +71,7 @@
 }
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
-    PlayingCard *playingCard = [self.deck objectAtIndex:indexPath.item];
+    PlayingCard *playingCard = self.deck[indexPath.item];
     PlayingCardCell *playingCardCell = [collectionView dequeueReusableCellWithReuseIdentifier:@"PlayingCardCell" forIndexPath:indexPath];
     playingCardCell.playingCard = playingCard;
     
@@ -81,22 +81,24 @@
 #pragma mark - LXReorderableCollectionViewDataSource methods
 
 - (void)collectionView:(UICollectionView *)collectionView itemAtIndexPath:(NSIndexPath *)fromIndexPath willMoveToIndexPath:(NSIndexPath *)toIndexPath {
-    PlayingCard *playingCard = [self.deck objectAtIndex:fromIndexPath.item];
-
+    PlayingCard *playingCard = self.deck[fromIndexPath.item];
+    
     [self.deck removeObjectAtIndex:fromIndexPath.item];
     [self.deck insertObject:playingCard atIndex:toIndexPath.item];
 }
 
 - (BOOL)collectionView:(UICollectionView *)collectionView canMoveItemAtIndexPath:(NSIndexPath *)indexPath {
 #if LX_LIMITED_MOVEMENT == 1
-    PlayingCard *playingCard = [deck objectAtIndex:indexPath.item];
+    PlayingCard *playingCard = self.deck[indexPath.item];
     
     switch (playingCard.suit) {
         case PlayingCardSuitSpade:
-        case PlayingCardSuitClub:
+        case PlayingCardSuitClub: {
             return YES;
-        default:
+        } break;
+        default: {
             return NO;
+        } break;
     }
 #else
     return YES;
@@ -105,15 +107,17 @@
 
 - (BOOL)collectionView:(UICollectionView *)collectionView itemAtIndexPath:(NSIndexPath *)fromIndexPath canMoveToIndexPath:(NSIndexPath *)toIndexPath {
 #if LX_LIMITED_MOVEMENT == 1
-    PlayingCard *fromPlayingCard = [deck objectAtIndex:fromIndexPath.item];
-    PlayingCard *toPlayingCard = [deck objectAtIndex:toIndexPath.item];
+    PlayingCard *fromPlayingCard = self.deck[fromIndexPath.item];
+    PlayingCard *toPlayingCard = self.deck[toIndexPath.item];
     
     switch (toPlayingCard.suit) {
         case PlayingCardSuitSpade:
-        case PlayingCardSuitClub:
+        case PlayingCardSuitClub: {
             return fromPlayingCard.rank == toPlayingCard.rank;
-        default:
+        } break;
+        default: {
             return NO;
+        } break;
     }
 #else
     return YES;

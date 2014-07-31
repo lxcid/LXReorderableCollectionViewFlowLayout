@@ -9,8 +9,6 @@
 #import <QuartzCore/QuartzCore.h>
 #import <objc/runtime.h>
 
-#define LX_FRAMES_PER_SECOND 60.0
-
 #ifndef CGGEOMETRY_LXSUPPORT_H_
 CG_INLINE CGPoint
 LXS_CGPointAdd(CGPoint point1, CGPoint point2) {
@@ -220,7 +218,7 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
     UIEdgeInsets contentInset = self.collectionView.contentInset;
     // Important to have an integer `distance` as the `contentOffset` property automatically gets rounded
     // and it would diverge from the view's center resulting in a "cell is slipping away under finger"-bug.
-    CGFloat distance = rint(self.scrollingSpeed / LX_FRAMES_PER_SECOND);
+    CGFloat distance = rint(self.scrollingSpeed * displayLink.duration);
     CGPoint translation = CGPointZero;
     
     switch(direction) {

@@ -389,10 +389,10 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
             
             switch (self.scrollDirection) {
                 case UICollectionViewScrollDirectionVertical: {
-                    if (viewCenter.y < (CGRectGetMinY(self.collectionView.bounds) + self.scrollingTriggerEdgeInsets.top)) {
+                    if (viewCenter.y < (CGRectGetMinY(self.collectionView.bounds) + self.collectionView.contentInset.top + self.scrollingTriggerEdgeInsets.top)) {
                         [self setupScrollTimerInDirection:LXScrollingDirectionUp];
                     } else {
-                        if (viewCenter.y > (CGRectGetMaxY(self.collectionView.bounds) - self.scrollingTriggerEdgeInsets.bottom)) {
+                        if (viewCenter.y > ((CGRectGetMaxY(self.collectionView.bounds) + self.collectionView.contentInset.bottom) - self.scrollingTriggerEdgeInsets.bottom)) {
                             [self setupScrollTimerInDirection:LXScrollingDirectionDown];
                         } else {
                             [self invalidatesScrollTimer];
@@ -400,10 +400,10 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
                     }
                 } break;
                 case UICollectionViewScrollDirectionHorizontal: {
-                    if (viewCenter.x < (CGRectGetMinX(self.collectionView.bounds) + self.scrollingTriggerEdgeInsets.left)) {
+                    if (viewCenter.x < (CGRectGetMinX(self.collectionView.bounds) + self.collectionView.contentInset.left + self.scrollingTriggerEdgeInsets.left)) {
                         [self setupScrollTimerInDirection:LXScrollingDirectionLeft];
                     } else {
-                        if (viewCenter.x > (CGRectGetMaxX(self.collectionView.bounds) - self.scrollingTriggerEdgeInsets.right)) {
+                        if (viewCenter.x > ((CGRectGetMaxX(self.collectionView.bounds) + self.collectionView.contentInset.right) - self.scrollingTriggerEdgeInsets.right)) {
                             [self setupScrollTimerInDirection:LXScrollingDirectionRight];
                         } else {
                             [self invalidatesScrollTimer];

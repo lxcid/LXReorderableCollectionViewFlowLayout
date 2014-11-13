@@ -84,6 +84,9 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 }
 
 - (void)setupCollectionView {
+    if (_longPressGestureRecognizer) {
+        [self.collectionView removeGestureRecognizer:_longPressGestureRecognizer];
+    }
     _longPressGestureRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self
                                                                                 action:@selector(handleLongPressGesture:)];
     _longPressGestureRecognizer.delegate = self;
@@ -97,7 +100,10 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
     }
     
     [self.collectionView addGestureRecognizer:_longPressGestureRecognizer];
-    
+
+    if (_panGestureRecognizer) {
+        [self.collectionView removeGestureRecognizer:_panGestureRecognizer];
+    }
     _panGestureRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self
                                                                     action:@selector(handlePanGesture:)];
     _panGestureRecognizer.delegate = self;
@@ -111,7 +117,7 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
     self = [super init];
     if (self) {
         [self setDefaults];
-        [self addObserver:self forKeyPath:kLXCollectionViewKeyPath options:NSKeyValueObservingOptionNew context:nil];
+        [self addObserver:self forKeyPath:kLXCollectionViewKeyPath options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld context:nil];
     }
     return self;
 }
@@ -120,7 +126,7 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
     self = [super initWithCoder:aDecoder];
     if (self) {
         [self setDefaults];
-        [self addObserver:self forKeyPath:kLXCollectionViewKeyPath options:NSKeyValueObservingOptionNew context:nil];
+        [self addObserver:self forKeyPath:kLXCollectionViewKeyPath options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld context:nil];
     }
     return self;
 }
@@ -497,6 +503,9 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
         if (self.collectionView != nil) {
             [self setupCollectionView];
         } else {
+            UICollectionView *collectionView = change[NSKeyValueChangeOldKey];
+            [collectionView removeGestureRecognizer:_longPressGestureRecognizer];
+            [collectionView removeGestureRecognizer:_panGestureRecognizer];
             [self invalidatesScrollTimer];
         }
     }

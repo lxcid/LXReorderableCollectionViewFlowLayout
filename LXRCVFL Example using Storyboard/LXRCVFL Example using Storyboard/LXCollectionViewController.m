@@ -9,7 +9,6 @@
 #import "LXCollectionViewController.h"
 #import "PlayingCard.h"
 #import "PlayingCardCell.h"
-#import "LXReorderableCollectionViewFlowLayout.h"
 
 // LX_LIMITED_MOVEMENT:
 // 0 = Any card can move anywhere
@@ -21,8 +20,6 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-//    self.collectionView.collectionViewLayout = [LXReorderableCollectionViewFlowLayout new];
-//    self.collectionView.collectionViewLayout = [LXReorderableCollectionViewFlowLayout new];
     
     self.deck = [self constructsDeck];
 }

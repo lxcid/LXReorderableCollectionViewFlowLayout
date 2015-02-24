@@ -511,7 +511,9 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
     if ([keyPath isEqualToString:kLXCollectionViewKeyPath]) {
         if (self.collectionView != nil) {
-            [self setupCollectionView];
+            if (self.longPressGestureRecognizer == nil) {
+                [self setupCollectionView];
+            }
         } else {
             [self invalidatesScrollTimer];
             [self tearDownCollectionView];

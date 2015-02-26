@@ -352,6 +352,9 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
                      if ([strongSelf.delegate respondsToSelector:@selector(collectionView:layout:didBeginDraggingItemAtIndexPath:)]) {
                          [strongSelf.delegate collectionView:strongSelf.collectionView layout:strongSelf didBeginDraggingItemAtIndexPath:strongSelf.selectedItemIndexPath];
                      }
+                     if ([strongSelf.delegate respondsToSelector:@selector(collectionView:layout:didBeginDraggingItemAtIndexPath:currentlyDraggedView:)]) {
+                         [strongSelf.delegate collectionView:strongSelf.collectionView layout:strongSelf didBeginDraggingItemAtIndexPath:strongSelf.selectedItemIndexPath currentlyDraggedView:strongSelf.currentView];
+                     }
                  }
              }];
             
@@ -364,6 +367,9 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
             if (currentIndexPath) {
                 if ([self.delegate respondsToSelector:@selector(collectionView:layout:willEndDraggingItemAtIndexPath:)]) {
                     [self.delegate collectionView:self.collectionView layout:self willEndDraggingItemAtIndexPath:currentIndexPath];
+                }
+                if ([self.delegate respondsToSelector:@selector(collectionView:layout:willEndDraggingItemAtIndexPath:currentlyDraggedView:)]) {
+                    [self.delegate collectionView:self.collectionView layout:self willEndDraggingItemAtIndexPath:currentIndexPath currentlyDraggedView:self.currentView];
                 }
                 
                 self.selectedItemIndexPath = nil;

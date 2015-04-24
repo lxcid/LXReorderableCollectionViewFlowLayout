@@ -51,7 +51,7 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 
 - (UIView *)LX_snapshotView {
     if ([self respondsToSelector:@selector(snapshotViewAfterScreenUpdates:)]) {
-        return [self snapshotViewAfterScreenUpdates:YES];
+        return [self snapshotViewAfterScreenUpdates:NO];
     } else {
         UIGraphicsBeginImageContextWithOptions(self.bounds.size, self.isOpaque, 0.0f);
         [self.layer renderInContext:UIGraphicsGetCurrentContext()];
@@ -312,7 +312,7 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
             }
             
             UICollectionViewCell *collectionViewCell = [self.collectionView cellForItemAtIndexPath:self.selectedItemIndexPath];
-            
+
             self.currentView = [[UIView alloc] initWithFrame:collectionViewCell.frame];
             
             collectionViewCell.highlighted = YES;

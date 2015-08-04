@@ -80,6 +80,7 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 
 - (void)setDefaults {
     _scrollingSpeed = 300.0f;
+    _scaleToMakeRoom = 0.9f;
     _scrollingTriggerEdgeInsets = UIEdgeInsetsMake(50.0f, 50.0f, 50.0f, 50.0f);
 }
 
@@ -339,6 +340,12 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
              animations:^{
                  __strong typeof(self) strongSelf = weakSelf;
                  if (strongSelf) {
+                     for(UICollectionViewCell *cell in self.collectionView.visibleCells){
+                        NSIndexPath *cellIndexPath = [self.collectionView indexPathForCell:cell];
+                         if(![_selectedItemIndexPath isEqual:cellIndexPath]){
+                             cell.transform = CGAffineTransformMakeScale(_scaleToMakeRoom, _scaleToMakeRoom);
+                         }
+                     }
                      strongSelf.currentView.transform = CGAffineTransformMakeScale(1.1f, 1.1f);
                      highlightedImageView.alpha = 0.0f;
                      imageView.alpha = 1.0f;
@@ -381,6 +388,9 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
                  animations:^{
                      __strong typeof(self) strongSelf = weakSelf;
                      if (strongSelf) {
+                         for(UICollectionViewCell *cell in self.collectionView.visibleCells){
+                             cell.transform = CGAffineTransformMakeScale(1, 1);
+                         }
                          strongSelf.currentView.transform = CGAffineTransformMakeScale(1.0f, 1.0f);
                          strongSelf.currentView.center = layoutAttributes.center;
                      }
@@ -457,6 +467,14 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
     NSArray *layoutAttributesForElementsInRect = [super layoutAttributesForElementsInRect:rect];
     
     for (UICollectionViewLayoutAttributes *layoutAttributes in layoutAttributesForElementsInRect) {
+        CGFloat scale;
+        if(self.selectedItemIndexPath){
+            scale = _scaleToMakeRoom;
+        }else{
+            scale = 1;
+        }
+        layoutAttributes.transform = CGAffineTransformMakeScale(scale, scale);
+        
         switch (layoutAttributes.representedElementCategory) {
             case UICollectionElementCategoryCell: {
                 [self applyLayoutAttributes:layoutAttributes];

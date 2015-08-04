@@ -340,9 +340,15 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
              animations:^{
                  __strong typeof(self) strongSelf = weakSelf;
                  if (strongSelf) {
+
+    
                      for(UICollectionViewCell *cell in self.collectionView.visibleCells){
-                        NSIndexPath *cellIndexPath = [self.collectionView indexPathForCell:cell];
-                         if(![_selectedItemIndexPath isEqual:cellIndexPath]){
+                         NSIndexPath *cellIndexPath = [self.collectionView indexPathForCell:cell];
+                         BOOL canMoveTo = YES;
+                         if ([strongSelf.dataSource respondsToSelector:@selector(collectionView:itemAtIndexPath:canMoveToIndexPath:)]) {
+                             canMoveTo = [strongSelf.dataSource collectionView:strongSelf.collectionView itemAtIndexPath:strongSelf.selectedItemIndexPath canMoveToIndexPath:cellIndexPath];
+                         }
+                         if(canMoveTo && ![_selectedItemIndexPath isEqual:cellIndexPath]){
                              cell.transform = CGAffineTransformMakeScale(_scaleToMakeRoom, _scaleToMakeRoom);
                          }
                      }
@@ -466,9 +472,22 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 - (NSArray *)layoutAttributesForElementsInRect:(CGRect)rect {
     NSArray *layoutAttributesForElementsInRect = [super layoutAttributesForElementsInRect:rect];
     
+    NSMutableArray *staticCellsLayoutAttributes = [NSMutableArray new];
+    
+    for(UICollectionViewCell *cell in self.collectionView.visibleCells){
+        NSIndexPath *cellIndexPath = [self.collectionView indexPathForCell:cell];
+        BOOL canMoveTo = YES;
+        if ([self.dataSource respondsToSelector:@selector(collectionView:itemAtIndexPath:canMoveToIndexPath:)]) {
+            canMoveTo = [self.dataSource collectionView:self.collectionView itemAtIndexPath:self.selectedItemIndexPath canMoveToIndexPath:cellIndexPath];
+        }
+        if(!canMoveTo){
+            [staticCellsLayoutAttributes addObject:[self layoutAttributesForItemAtIndexPath:cellIndexPath]];
+        }
+    }
+    
     for (UICollectionViewLayoutAttributes *layoutAttributes in layoutAttributesForElementsInRect) {
         CGFloat scale;
-        if(self.selectedItemIndexPath){
+        if(self.selectedItemIndexPath && ![staticCellsLayoutAttributes containsObject:layoutAttributes]){
             scale = _scaleToMakeRoom;
         }else{
             scale = 1;

@@ -113,6 +113,30 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleApplicationWillResignActive:) name: UIApplicationWillResignActiveNotification object:nil];
 }
 
+- (void)tearDownCollectionView {
+    // Tear down long press gesture
+    if (_longPressGestureRecognizer) {
+        UIView *view = _longPressGestureRecognizer.view;
+        if (view) {
+            [view removeGestureRecognizer:_longPressGestureRecognizer];
+        }
+        _longPressGestureRecognizer.delegate = nil;
+        _longPressGestureRecognizer = nil;
+    }
+    
+    // Tear down pan gesture
+    if (_panGestureRecognizer) {
+        UIView *view = _panGestureRecognizer.view;
+        if (view) {
+            [view removeGestureRecognizer:_panGestureRecognizer];
+        }
+        _panGestureRecognizer.delegate = nil;
+        _panGestureRecognizer = nil;
+    }
+    
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationWillResignActiveNotification object:nil];
+}
+
 - (id)init {
     self = [super init];
     if (self) {
@@ -133,8 +157,8 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 
 - (void)dealloc {
     [self invalidatesScrollTimer];
+    [self tearDownCollectionView];
     [self removeObserver:self forKeyPath:kLXCollectionViewKeyPath];
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationWillResignActiveNotification object:nil];
 }
 
 - (void)applyLayoutAttributes:(UICollectionViewLayoutAttributes *)layoutAttributes {
@@ -358,6 +382,8 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
                 
                 UICollectionViewLayoutAttributes *layoutAttributes = [self layoutAttributesForItemAtIndexPath:currentIndexPath];
                 
+                self.longPressGestureRecognizer.enabled = NO;
+                
                 __weak typeof(self) weakSelf = self;
                 [UIView
                  animateWithDuration:0.3
@@ -374,6 +400,9 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
                      }
                  }
                  completion:^(BOOL finished) {
+                     
+                     self.longPressGestureRecognizer.enabled = YES;
+                     
                      __strong typeof(self) strongSelf = weakSelf;
                      if (strongSelf) {
                          [strongSelf.currentView removeFromSuperview];
@@ -507,6 +536,7 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
             [collectionView removeGestureRecognizer:_longPressGestureRecognizer];
             [collectionView removeGestureRecognizer:_panGestureRecognizer];
             [self invalidatesScrollTimer];
+            [self tearDownCollectionView];
         }
     }
 }

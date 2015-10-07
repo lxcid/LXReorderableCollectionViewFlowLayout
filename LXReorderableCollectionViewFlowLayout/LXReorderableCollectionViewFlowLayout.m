@@ -331,6 +331,10 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
             
             self.currentViewCenter = self.currentView.center;
             
+            if ([self.delegate respondsToSelector:@selector(collectionView:layout:willBeginDraggingItemAtIndexPath:currentlyDraggedView:)]) {
+                [self.delegate collectionView:self.collectionView layout:self willBeginDraggingItemAtIndexPath:self.selectedItemIndexPath currentlyDraggedView:self.currentView];
+            }
+            
             __weak typeof(self) weakSelf = self;
             [UIView
              animateWithDuration:0.3
@@ -342,6 +346,10 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
                      strongSelf.currentView.transform = CGAffineTransformMakeScale(1.1f, 1.1f);
                      highlightedImageView.alpha = 0.0f;
                      imageView.alpha = 1.0f;
+                     
+                     if ([strongSelf.delegate respondsToSelector:@selector(collectionView:layout:configureAnimationPropertiesForBeginningDrag:)]) {
+                         [strongSelf.delegate collectionView:strongSelf.collectionView layout:strongSelf configureAnimationPropertiesForBeginningDrag:strongSelf.currentView];
+                     }
                  }
              }
              completion:^(BOOL finished) {
@@ -351,6 +359,9 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
                      
                      if ([strongSelf.delegate respondsToSelector:@selector(collectionView:layout:didBeginDraggingItemAtIndexPath:)]) {
                          [strongSelf.delegate collectionView:strongSelf.collectionView layout:strongSelf didBeginDraggingItemAtIndexPath:strongSelf.selectedItemIndexPath];
+                     }
+                     if ([strongSelf.delegate respondsToSelector:@selector(collectionView:layout:didBeginDraggingItemAtIndexPath:currentlyDraggedView:)]) {
+                         [strongSelf.delegate collectionView:strongSelf.collectionView layout:strongSelf didBeginDraggingItemAtIndexPath:strongSelf.selectedItemIndexPath currentlyDraggedView:strongSelf.currentView];
                      }
                  }
              }];
@@ -364,6 +375,9 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
             if (currentIndexPath) {
                 if ([self.delegate respondsToSelector:@selector(collectionView:layout:willEndDraggingItemAtIndexPath:)]) {
                     [self.delegate collectionView:self.collectionView layout:self willEndDraggingItemAtIndexPath:currentIndexPath];
+                }
+                if ([self.delegate respondsToSelector:@selector(collectionView:layout:willEndDraggingItemAtIndexPath:currentlyDraggedView:)]) {
+                    [self.delegate collectionView:self.collectionView layout:self willEndDraggingItemAtIndexPath:currentIndexPath currentlyDraggedView:self.currentView];
                 }
                 
                 self.selectedItemIndexPath = nil;
@@ -383,6 +397,10 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
                      if (strongSelf) {
                          strongSelf.currentView.transform = CGAffineTransformMakeScale(1.0f, 1.0f);
                          strongSelf.currentView.center = layoutAttributes.center;
+                         
+                         if ([strongSelf.delegate respondsToSelector:@selector(collectionView:layout:configureAnimationPropertiesForEndingDrag:)]) {
+                             [strongSelf.delegate collectionView:strongSelf.collectionView layout:strongSelf configureAnimationPropertiesForEndingDrag:strongSelf.currentView];
+                         }
                      }
                  }
                  completion:^(BOOL finished) {

@@ -80,14 +80,14 @@
 
 #pragma mark - LXReorderableCollectionViewDataSource methods
 
-- (void)collectionView:(UICollectionView *)collectionView itemAtIndexPath:(NSIndexPath *)fromIndexPath willMoveToIndexPath:(NSIndexPath *)toIndexPath {
+- (void)lcx_collectionView:(UICollectionView *)collectionView itemAtIndexPath:(NSIndexPath *)fromIndexPath willMoveToIndexPath:(NSIndexPath *)toIndexPath {
     PlayingCard *playingCard = self.deck[fromIndexPath.item];
     
     [self.deck removeObjectAtIndex:fromIndexPath.item];
     [self.deck insertObject:playingCard atIndex:toIndexPath.item];
 }
 
-- (BOOL)collectionView:(UICollectionView *)collectionView canMoveItemAtIndexPath:(NSIndexPath *)indexPath {
+- (BOOL)lcx_collectionView:(UICollectionView *)collectionView canMoveItemAtIndexPath:(NSIndexPath *)indexPath {
 #if LX_LIMITED_MOVEMENT == 1
     PlayingCard *playingCard = self.deck[indexPath.item];
     
@@ -105,7 +105,7 @@
 #endif
 }
 
-- (BOOL)collectionView:(UICollectionView *)collectionView itemAtIndexPath:(NSIndexPath *)fromIndexPath canMoveToIndexPath:(NSIndexPath *)toIndexPath {
+- (BOOL)lcx_collectionView:(UICollectionView *)collectionView itemAtIndexPath:(NSIndexPath *)fromIndexPath canMoveToIndexPath:(NSIndexPath *)toIndexPath {
 #if LX_LIMITED_MOVEMENT == 1
     PlayingCard *fromPlayingCard = self.deck[fromIndexPath.item];
     PlayingCard *toPlayingCard = self.deck[toIndexPath.item];
@@ -126,19 +126,19 @@
 
 #pragma mark - LXReorderableCollectionViewDelegateFlowLayout methods
 
-- (void)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout willBeginDraggingItemAtIndexPath:(NSIndexPath *)indexPath {
+- (void)lcx_collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout willBeginDraggingItemAtIndexPath:(NSIndexPath *)indexPath {
     NSLog(@"will begin drag");
 }
 
-- (void)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout didBeginDraggingItemAtIndexPath:(NSIndexPath *)indexPath {
+- (void)lcx_collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout didBeginDraggingItemAtIndexPath:(NSIndexPath *)indexPath {
     NSLog(@"did begin drag");
 }
 
-- (void)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout willEndDraggingItemAtIndexPath:(NSIndexPath *)indexPath {
+- (void)lcx_collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout willEndDraggingItemAtIndexPath:(NSIndexPath *)indexPath {
      NSLog(@"will end drag");
 }
 
-- (void)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout didEndDraggingItemAtIndexPath:(NSIndexPath *)indexPath {
+- (void)lcx_collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout didEndDraggingItemAtIndexPath:(NSIndexPath *)indexPath {
      NSLog(@"did end drag");
 }
 

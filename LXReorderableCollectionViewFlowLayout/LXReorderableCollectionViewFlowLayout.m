@@ -178,14 +178,14 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
     }
     
     if ([self.dataSource respondsToSelector:@selector(collectionView:itemAtIndexPath:canMoveToIndexPath:)] &&
-        ![self.dataSource collectionView:self.collectionView itemAtIndexPath:previousIndexPath canMoveToIndexPath:newIndexPath]) {
+        ![self.dataSource lcx_collectionView:self.collectionView itemAtIndexPath:previousIndexPath canMoveToIndexPath:newIndexPath]) {
         return;
     }
     
     self.selectedItemIndexPath = newIndexPath;
     
     if ([self.dataSource respondsToSelector:@selector(collectionView:itemAtIndexPath:willMoveToIndexPath:)]) {
-        [self.dataSource collectionView:self.collectionView itemAtIndexPath:previousIndexPath willMoveToIndexPath:newIndexPath];
+        [self.dataSource lcx_collectionView:self.collectionView itemAtIndexPath:previousIndexPath willMoveToIndexPath:newIndexPath];
     }
 
     __weak typeof(self) weakSelf = self;
@@ -198,7 +198,7 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
     } completion:^(BOOL finished) {
         __strong typeof(self) strongSelf = weakSelf;
         if ([strongSelf.dataSource respondsToSelector:@selector(collectionView:itemAtIndexPath:didMoveToIndexPath:)]) {
-            [strongSelf.dataSource collectionView:strongSelf.collectionView itemAtIndexPath:previousIndexPath didMoveToIndexPath:newIndexPath];
+            [strongSelf.dataSource lcx_collectionView:strongSelf.collectionView itemAtIndexPath:previousIndexPath didMoveToIndexPath:newIndexPath];
         }
     }];
 }
@@ -308,7 +308,7 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
             self.selectedItemIndexPath = currentIndexPath;
             
             if ([self.delegate respondsToSelector:@selector(collectionView:layout:willBeginDraggingItemAtIndexPath:)]) {
-                [self.delegate collectionView:self.collectionView layout:self willBeginDraggingItemAtIndexPath:self.selectedItemIndexPath];
+                [self.delegate lcx_collectionView:self.collectionView layout:self willBeginDraggingItemAtIndexPath:self.selectedItemIndexPath];
             }
             
             UICollectionViewCell *collectionViewCell = [self.collectionView cellForItemAtIndexPath:self.selectedItemIndexPath];
@@ -350,7 +350,7 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
                      [highlightedImageView removeFromSuperview];
                      
                      if ([strongSelf.delegate respondsToSelector:@selector(collectionView:layout:didBeginDraggingItemAtIndexPath:)]) {
-                         [strongSelf.delegate collectionView:strongSelf.collectionView layout:strongSelf didBeginDraggingItemAtIndexPath:strongSelf.selectedItemIndexPath];
+                         [strongSelf.delegate lcx_collectionView:strongSelf.collectionView layout:strongSelf didBeginDraggingItemAtIndexPath:strongSelf.selectedItemIndexPath];
                      }
                  }
              }];
@@ -363,7 +363,7 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
             
             if (currentIndexPath) {
                 if ([self.delegate respondsToSelector:@selector(collectionView:layout:willEndDraggingItemAtIndexPath:)]) {
-                    [self.delegate collectionView:self.collectionView layout:self willEndDraggingItemAtIndexPath:currentIndexPath];
+                    [self.delegate lcx_collectionView:self.collectionView layout:self willEndDraggingItemAtIndexPath:currentIndexPath];
                 }
                 
                 self.selectedItemIndexPath = nil;
@@ -396,7 +396,7 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
                          [strongSelf invalidateLayout];
                          
                          if ([strongSelf.delegate respondsToSelector:@selector(collectionView:layout:didEndDraggingItemAtIndexPath:)]) {
-                             [strongSelf.delegate collectionView:strongSelf.collectionView layout:strongSelf didEndDraggingItemAtIndexPath:currentIndexPath];
+                             [strongSelf.delegate lcx_collectionView:strongSelf.collectionView layout:strongSelf didEndDraggingItemAtIndexPath:currentIndexPath];
                          }
                      }
                  }];

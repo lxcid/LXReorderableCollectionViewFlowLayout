@@ -332,7 +332,7 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
             self.currentViewCenter = self.currentView.center;
             
             if ([self.delegate respondsToSelector:@selector(collectionView:layout:didBeginDraggingItemAtIndexPath:)]) {
-                  [self.delegate collectionView:strongSelf.collectionView layout:self didBeginDraggingItemAtIndexPath:self.selectedItemIndexPath];
+                  [self.delegate collectionView:self.collectionView layout:self didBeginDraggingItemAtIndexPath:self.selectedItemIndexPath];
             }
         
             __weak typeof(self) weakSelf = self;

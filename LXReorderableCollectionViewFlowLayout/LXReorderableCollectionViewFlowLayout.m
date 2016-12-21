@@ -150,6 +150,8 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 }
 
 - (void)dealloc {
+    self.panGestureRecognizer.delegate = nil;
+    self.longPressGestureRecognizer.delegate = nil;
     [self invalidatesScrollTimer];
     [self tearDownCollectionView];
     [self removeObserver:self forKeyPath:kLXCollectionViewKeyPath];

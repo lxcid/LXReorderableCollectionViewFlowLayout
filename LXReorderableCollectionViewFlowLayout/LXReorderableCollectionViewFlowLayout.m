@@ -6,7 +6,6 @@
 //
 
 #import "LXReorderableCollectionViewFlowLayout.h"
-#import <QuartzCore/QuartzCore.h>
 #import <objc/runtime.h>
 
 #ifndef CGGEOMETRY_LXSUPPORT_H_

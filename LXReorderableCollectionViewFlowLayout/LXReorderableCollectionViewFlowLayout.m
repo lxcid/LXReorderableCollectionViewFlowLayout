@@ -347,7 +347,11 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
              animations:^{
                  __strong typeof(self) strongSelf = weakSelf;
                  if (strongSelf) {
-                     strongSelf.currentView.transform = CGAffineTransformMakeScale(1.1f, 1.1f);
+                     if ([strongSelf.delegate respondsToSelector:@selector(collectionView:layout:adjustCurrentViewForDragAnimated:)]) {
+                         [strongSelf.delegate collectionView:strongSelf.collectionView layout:strongSelf adjustCurrentViewForDragAnimated:strongSelf.currentView];
+                     } else {
+                         strongSelf.currentView.transform = CGAffineTransformMakeScale(1.1f, 1.1f);
+                     }
                      highlightedImageView.alpha = 0.0f;
                      imageView.alpha = 1.0f;
                  }
@@ -385,6 +389,9 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
                  animations:^{
                      __strong typeof(self) strongSelf = weakSelf;
                      if (strongSelf) {
+                         if ([strongSelf.delegate respondsToSelector:@selector(collectionView:layout:adjustCurrentViewForDropAnimated:)]) {
+                             [strongSelf.delegate collectionView:strongSelf.collectionView layout:strongSelf adjustCurrentViewForDropAnimated:strongSelf.currentView];
+                         }
                          strongSelf.currentView.transform = CGAffineTransformMakeScale(1.0f, 1.0f);
                          strongSelf.currentView.center = layoutAttributes.center;
                      }
@@ -416,8 +423,21 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
         case UIGestureRecognizerStateBegan:
         case UIGestureRecognizerStateChanged: {
             self.panTranslationInCollectionView = [gestureRecognizer translationInView:self.collectionView];
-            CGPoint viewCenter = self.currentView.center = LXS_CGPointAdd(self.currentViewCenter, self.panTranslationInCollectionView);
-            
+
+            CGPoint directionalTranslation = self.panTranslationInCollectionView;
+            if (self.lockPanningToScrollDirection) {
+                switch (self.scrollDirection) {
+                    case UICollectionViewScrollDirectionVertical:
+                        directionalTranslation.x = 0;
+                        break;
+                    case UICollectionViewScrollDirectionHorizontal:
+                        directionalTranslation.y = 0;
+                        break;
+                }
+            }
+            self.currentView.center = LXS_CGPointAdd(self.currentViewCenter, directionalTranslation);
+
+            CGPoint viewCenter = self.currentView.center;
             [self invalidateLayoutIfNecessary];
             
             switch (self.scrollDirection) {

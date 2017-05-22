@@ -10,6 +10,7 @@
 @interface LXReorderableCollectionViewFlowLayout : UICollectionViewFlowLayout <UIGestureRecognizerDelegate>
 
 @property (assign, nonatomic) CGFloat scrollingSpeed;
+@property (assign, nonatomic) CGFloat scaleToMakeRoom;
 @property (assign, nonatomic) UIEdgeInsets scrollingTriggerEdgeInsets;
 @property (strong, nonatomic, readonly) UILongPressGestureRecognizer *longPressGestureRecognizer;
 @property (strong, nonatomic, readonly) UIPanGestureRecognizer *panGestureRecognizer;

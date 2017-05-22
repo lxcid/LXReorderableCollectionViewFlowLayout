@@ -173,7 +173,7 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
     NSIndexPath *newIndexPath = [self.collectionView indexPathForItemAtPoint:self.currentView.center];
     NSIndexPath *previousIndexPath = self.selectedItemIndexPath;
     
-    if ((newIndexPath == nil) || [newIndexPath isEqual:previousIndexPath]) {
+    if ((newIndexPath == nil) || (previousIndexPath == nil) || [newIndexPath isEqual:previousIndexPath]) {
         return;
     }
     

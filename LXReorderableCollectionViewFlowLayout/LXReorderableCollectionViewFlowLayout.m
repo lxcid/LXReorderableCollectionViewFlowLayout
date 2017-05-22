@@ -506,7 +506,14 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
     if ([self.panGestureRecognizer isEqual:gestureRecognizer]) {
         return [self.longPressGestureRecognizer isEqual:otherGestureRecognizer];
     }
-    
+
+
+    // Allow the underlying scroll view pan gestures to work as expected on iOS 9 and higher
+    if ([otherGestureRecognizer isKindOfClass:NSClassFromString(@"UIScrollViewPanGestureRecognizer")] &&
+        [self.collectionView.gestureRecognizers containsObject:otherGestureRecognizer]) {
+        return YES;
+    }
+
     return NO;
 }
 

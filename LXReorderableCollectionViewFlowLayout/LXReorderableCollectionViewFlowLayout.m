@@ -317,17 +317,50 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
             
             UICollectionViewCell *collectionViewCell = [self.collectionView cellForItemAtIndexPath:self.selectedItemIndexPath];
             
-            self.currentView = [[UIView alloc] initWithFrame:collectionViewCell.frame];
+            //
+            // Get the draggable cell preview a frame based on bounds (independent of current transform)
+            // and adjust the center to the cell's frame center
+            //
+            self.currentView = [[UIView alloc] initWithFrame:collectionViewCell.bounds];
+            self.currentView.center = collectionViewCell.center;
+            
             
             collectionViewCell.highlighted = YES;
             UIView *highlightedImageView = [collectionViewCell LX_snapshotView];
             highlightedImageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
             highlightedImageView.alpha = 1.0f;
             
+            // Maintain the cell's layer properties in highlight preview
+            highlightedImageView.clipsToBounds = YES;
+            highlightedImageView.layer.cornerRadius = collectionViewCell.layer.cornerRadius;
+            highlightedImageView.layer.borderColor = collectionViewCell.layer.borderColor;
+            highlightedImageView.layer.borderWidth = collectionViewCell.layer.borderWidth;
+            
+            
             collectionViewCell.highlighted = NO;
             UIView *imageView = [collectionViewCell LX_snapshotView];
             imageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
             imageView.alpha = 0.0f;
+            
+            // Maintain the cell's layer properties in image preview
+            imageView.clipsToBounds = YES;
+            imageView.layer.cornerRadius = collectionViewCell.layer.cornerRadius;
+            imageView.layer.borderColor = collectionViewCell.layer.borderColor;
+            imageView.layer.borderWidth = collectionViewCell.layer.borderWidth;
+            
+            //
+            // Maintain the cell's layer border and shadow attributes
+            // Here we have to disable clipsToBounds in order to make the shadow visible if availble
+            //
+            self.currentView.clipsToBounds = NO;
+            CGFloat cornerRadius = collectionViewCell.layer.cornerRadius;
+            self.currentView.layer.cornerRadius = cornerRadius;
+            self.currentView.layer.shadowColor = collectionViewCell.layer.shadowColor;
+            self.currentView.layer.shadowOffset = collectionViewCell.layer.shadowOffset;
+            self.currentView.layer.shadowRadius = collectionViewCell.layer.shadowRadius;
+            self.currentView.layer.shadowOpacity = collectionViewCell.layer.shadowOpacity;
+            self.currentView.layer.shadowPath = collectionViewCell.layer.shadowPath;
+            self.currentView.backgroundColor = [UIColor clearColor];
             
             [self.currentView addSubview:imageView];
             [self.currentView addSubview:highlightedImageView];

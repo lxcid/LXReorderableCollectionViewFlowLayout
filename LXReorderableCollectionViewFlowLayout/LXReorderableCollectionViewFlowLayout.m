@@ -250,21 +250,32 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
         case LXScrollingDirectionUp: {
             distance = -distance;
             CGFloat minY = 0.0f - contentInset.top;
-            
+
             if ((contentOffset.y + distance) <= minY) {
                 distance = -contentOffset.y - contentInset.top;
             }
-            
+
             translation = CGPointMake(0.0f, distance);
         } break;
         case LXScrollingDirectionDown: {
+            /*
+             ================
+              DEVELOPER NOTE
+             ================
+             This has been commented out to fix a bug where when dragging a photo the Collection view scrolls up under the Navigation Bar
+             obsecuring the first row of images. To fix the scrolling I have disable the math to move the collection view up under the Nav Bar
+                    - Brett Schumann
+                    - 07 March 2019
+                    - Jira Ticket : https://t101ltd.atlassian.net/browse/IOS-19
+             
             CGFloat maxY = MAX(contentSize.height, frameSize.height) - frameSize.height + contentInset.bottom;
-            
+
             if ((contentOffset.y + distance) >= maxY) {
                 distance = maxY - contentOffset.y;
             }
-            
+
             translation = CGPointMake(0.0f, distance);
+             */
         } break;
         case LXScrollingDirectionLeft: {
             distance = -distance;

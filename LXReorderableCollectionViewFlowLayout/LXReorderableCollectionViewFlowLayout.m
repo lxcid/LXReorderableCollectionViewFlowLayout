@@ -267,15 +267,18 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
                     - Brett Schumann
                     - 07 March 2019
                     - Jira Ticket : https://t101ltd.atlassian.net/browse/IOS-19
-             
-            CGFloat maxY = MAX(contentSize.height, frameSize.height) - frameSize.height + contentInset.bottom;
-
-            if ((contentOffset.y + distance) >= maxY) {
-                distance = maxY - contentOffset.y;
-            }
-
-            translation = CGPointMake(0.0f, distance);
              */
+            if (self.allowScrollingDown) {
+            
+                CGFloat maxY = MAX(contentSize.height, frameSize.height) - frameSize.height + contentInset.bottom;
+
+                if ((contentOffset.y + distance) >= maxY) {
+                    distance = maxY - contentOffset.y;
+                }
+
+                translation = CGPointMake(0.0f, distance);
+            }
+//             */
         } break;
         case LXScrollingDirectionLeft: {
             distance = -distance;

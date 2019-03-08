@@ -13,6 +13,7 @@
 @property (assign, nonatomic) UIEdgeInsets scrollingTriggerEdgeInsets;
 @property (strong, nonatomic, readonly) UILongPressGestureRecognizer *longPressGestureRecognizer;
 @property (strong, nonatomic, readonly) UIPanGestureRecognizer *panGestureRecognizer;
+@property (nonatomic) BOOL allowScrollingDown;
 
 - (void)setUpGestureRecognizersOnCollectionView __attribute__((deprecated("Calls to setUpGestureRecognizersOnCollectionView method are not longer needed as setup are done automatically through KVO.")));
 
